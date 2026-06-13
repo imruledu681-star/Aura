@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/app-debug.apk",
+      "dest": "/app-debug.apk"
+    },
+    {
+      "src": "/app-debug-apk.zip",
+      "dest": "/app-debug-apk.zip"
+    },
+    {
+      "src": "/app-debug-apk.bin",
+      "dest": "/app-debug-apk.bin"
+    },
+    {
+      "src": "/api/share",
+      "dest": "/api/share.js"
+    },
+    {
+      "src": "/shared_post/?",
+      "dest": "/api/share.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/share.js"
+    }
+  ]
+}
