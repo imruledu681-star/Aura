@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
+  alias(libs.plugins.google.services)
 }
 
 android {
@@ -105,6 +106,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
+  implementation(libs.firebase.database)
 
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
@@ -148,10 +150,10 @@ tasks.register("copyApkOutputs") {
     val dest2Path = file("${project.rootDir}/APK_DOWNLOAD/app-debug.apk").absolutePath
     val fallbackBinPath = file("${project.rootDir}/APK_DOWNLOAD/app-debug-apk.bin").absolutePath
     val zipFilePath = file("${project.rootDir}/APK_DOWNLOAD/app-debug-apk.zip").absolutePath
+    val rawTxtPath = file("${project.rootDir}/APK_DOWNLOAD/app-debug-apk-raw.txt").absolutePath
     
     val dest1DirPath = file("${project.rootDir}/.build-outputs").absolutePath
     val dest2DirPath = file("${project.rootDir}/APK_DOWNLOAD").absolutePath
-    val vercelPublicDirPath = file("${project.rootDir}/Vercel-Portal/public").absolutePath
 
     doLast {
         val sourceApk = File(srcPath)
@@ -160,10 +162,10 @@ tasks.register("copyApkOutputs") {
             val dest2 = File(dest2Path)
             val fallbackBin = File(fallbackBinPath)
             val zipFile = File(zipFilePath)
+            val rawTxt = File(rawTxtPath)
             
             File(dest1DirPath).mkdirs()
             File(dest2DirPath).mkdirs()
-            File(vercelPublicDirPath).mkdirs()
             
             // 1. Copy to standard destination 1
             sourceApk.copyTo(dest1, overwrite = true)
@@ -176,11 +178,15 @@ tasks.register("copyApkOutputs") {
             // 3. Copy to fallback bin file (to prevent direct browser/platform downloads block on APK extension)
             sourceApk.copyTo(fallbackBin, overwrite = true)
             println("SUCCESS: App debug APK copied as BIN to ${fallbackBin.absolutePath} (Size: ${fallbackBin.length()} bytes)")
+
+            // 3.5 Copy to TXT file (to guarantee inclusion inside platform workspace ZIP export)
+            sourceApk.copyTo(rawTxt, overwrite = true)
+            println("SUCCESS: App debug APK copied as TXT to ${rawTxt.absolutePath} (Size: ${rawTxt.length()} bytes)")
             
-            // 4. Compress to a single ZIP file (maximum compatibility, prevents truncation / compression corruption)
+            // 4. Create an uncompressed ZIP file (maximum compatibility, prevents truncation / compression corruption)
             BufferedOutputStream(FileOutputStream(zipFile)).use { bos ->
                 ZipOutputStream(bos).use { zos ->
-                    zos.setLevel(Deflater.BEST_COMPRESSION)
+                    zos.setLevel(Deflater.NO_COMPRESSION)
                     val entry = ZipEntry("app-debug.apk")
                     zos.putNextEntry(entry)
                     val buffer = ByteArray(8192)
@@ -195,15 +201,6 @@ tasks.register("copyApkOutputs") {
                 }
             }
             println("SUCCESS: App debug APK compressed into ZIP at ${zipFile.absolutePath} (Size: ${zipFile.length()} bytes)")
-
-            // 5. Place in Vercel-Portal/public directory for easy Zero-Config Instant Deployment
-            val vercelApk = File(vercelPublicDirPath, "app-debug.apk")
-            val vercelBin = File(vercelPublicDirPath, "app-debug-apk.bin")
-            val vercelZip = File(vercelPublicDirPath, "app-debug-apk.zip")
-            sourceApk.copyTo(vercelApk, overwrite = true)
-            sourceApk.copyTo(vercelBin, overwrite = true)
-            zipFile.copyTo(vercelZip, overwrite = true)
-            println("SUCCESS: Copied all installer assets to Vercel portal public assets folder at ${vercelPublicDirPath}")
         } else {
             error("Source APK not found at ${sourceApk.absolutePath}")
         }

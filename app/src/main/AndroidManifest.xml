@@ -50,12 +50,12 @@
                 <data android:host="ais-dev-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app" />
             </intent-filter>
 
-            <!-- Custom Scheme Deep Linking for instantly opening the APK on device -->
+            <!-- Custom Scheme Deep Linking for instantly opening the App via custom URIs (aura://post) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="aura" />
+                <data android:scheme="aura" android:host="post" />
             </intent-filter>
         </activity>
 
@@ -67,6 +67,16 @@
                 <data android:scheme="appwrite-callback-6a1ee8cb001248095722" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

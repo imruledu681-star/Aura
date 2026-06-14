@@ -6895,7 +6895,17 @@ fun MainScreen(
                                         .size(38.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFFF0F2F5))
-                                        .clickable { showPlusDropdown = !showPlusDropdown }
+                                        .clickable {
+                                            if (state.isViewingAsGuest) {
+                                                android.widget.Toast.makeText(
+                                                    context,
+                                                    "আপনি বর্তমানে গেস্ট মোডে আছেন! গল্প, রিল বা পোস্ট তৈরি করতে ওড়া অ্যাপে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up to perform this activity!)",
+                                                    android.widget.Toast.LENGTH_LONG
+                                                ).show()
+                                            } else {
+                                                showPlusDropdown = !showPlusDropdown
+                                            }
+                                        }
                                         .testTag("action_plus_trigger"),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -7030,7 +7040,15 @@ fun MainScreen(
                                     .clip(CircleShape)
                                     .background(Color(0xFFF0F2F5))
                                     .clickable {
-                                        viewModel.navigateTo(Screen.SearchUsers)
+                                        if (state.isViewingAsGuest) {
+                                            android.widget.Toast.makeText(
+                                                context,
+                                                "আপনি বর্তমানে গেস্ট মোডে আছেন! বন্ধুদের খুঁজতে ও অ্যাক্টিভিটি করতে দয়া করে ওড়া অ্যাপে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up for full access!)",
+                                                android.widget.Toast.LENGTH_LONG
+                                            ).show()
+                                        } else {
+                                            viewModel.navigateTo(Screen.SearchUsers)
+                                        }
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -7049,9 +7067,17 @@ fun MainScreen(
                                      .clip(CircleShape)
                                      .background(Color(0xFFF0F2F5))
                                      .clickable {
-                                         val other = viewModel.allUsers.value.find { !it.isCurrentUser }
-                                         if (other != null) {
-                                             viewModel.navigateTo(Screen.ChatRoom(other))
+                                         if (state.isViewingAsGuest) {
+                                             android.widget.Toast.makeText(
+                                                 context,
+                                                 "আপনি বর্তমানে গেস্ট মোডে আছেন! বন্ধুদের সাথে চ্যাট করতে ওড়া অ্যাপে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up for full access!)",
+                                                 android.widget.Toast.LENGTH_LONG
+                                             ).show()
+                                         } else {
+                                             val other = viewModel.allUsers.value.find { !it.isCurrentUser }
+                                             if (other != null) {
+                                                 viewModel.navigateTo(Screen.ChatRoom(other))
+                                             }
                                          }
                                      }
                                      .testTag("chat_trigger"),
@@ -7088,7 +7114,7 @@ fun MainScreen(
                         val tabs = listOf(
                             Triple(MainTab.FEEDS, Icons.Filled.Home to Icons.Outlined.Home, "Home"),
                             Triple(MainTab.FRIENDS, Icons.Filled.People to Icons.Outlined.People, "Friends"),
-                            Triple(MainTab.CREATE_POST, Icons.Filled.OndemandVideo to Icons.Outlined.OndemandVideo, "Videos"),
+                            Triple(MainTab.VIDEOS, Icons.Filled.OndemandVideo to Icons.Outlined.OndemandVideo, "Videos"),
                             Triple(MainTab.NOTIFICATIONS, Icons.Filled.Notifications to Icons.Outlined.Notifications, "Notification"),
                             Triple(MainTab.PROFILE, Icons.Filled.AccountCircle to Icons.Outlined.AccountCircle, "Profile")
                         )
@@ -7101,7 +7127,17 @@ fun MainScreen(
                             }
                             NavigationBarItem(
                                 selected = isSelected,
-                                onClick = { viewModel.selectTab(tab) },
+                                onClick = {
+                                    if (state.isViewingAsGuest && tab != MainTab.FEEDS) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "আপনি বর্তমানে গেস্ট মোডে আছেন! এই ট্যাবটি অ্যাক্সেস করতে এবং বন্ধুদের সাথে সংযুক্ত হতে ওড়া অ্যাপে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up for full access!)",
+                                            android.widget.Toast.LENGTH_LONG
+                                        ).show()
+                                    } else {
+                                        viewModel.selectTab(tab)
+                                    }
+                                },
                                 icon = {
                                     if (tab == MainTab.PROFILE) {
                                         ProfileAvatar(
@@ -7142,12 +7178,15 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .swipeTabGesture(state.currentTab) { nextTab ->
-                        viewModel.selectTab(nextTab)
+                        if (!state.isViewingAsGuest) {
+                            viewModel.selectTab(nextTab)
+                        }
                     }
             ) {
                 when (state.currentTab) {
                     MainTab.FEEDS -> FeedsTab(state, viewModel, currentUserState, feedsLazyListState)
                     MainTab.FRIENDS -> FriendsTab(state, viewModel)
+                    MainTab.VIDEOS -> VideosTab(state, viewModel)
                     MainTab.CREATE_POST -> CreatePostTab(state, viewModel)
                     MainTab.NOTIFICATIONS -> NotificationsTab(state, viewModel)
                     MainTab.PROFILE -> ProfileTab(state, viewModel, currentUserState)
@@ -7972,7 +8011,7 @@ fun MainScreen(
                                 Text("• Language Settings", fontSize = 13.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 4.dp))
                                 Text("• Aura Dynamic Share Hub 🚀", fontSize = 13.sp, color = Color(0xFF7C4DFF), fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).clickable {
                                     showMenuOverlay = false
-                                    showShareSettingsDialog = true
+                                    viewModel.selectTab(MainTab.SETTINGS)
                                 })
                             }
                         }
@@ -8064,6 +8103,76 @@ fun MainScreen(
                                     tint = Color.Gray,
                                     modifier = Modifier.size(18.dp)
                                 )
+                            }
+                        }
+
+                        if (state.isViewingAsGuest) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                                    .border(1.dp, Color(0xFFE91E63), RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F5))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Lock,
+                                            contentDescription = null,
+                                            tint = Color(0xFFE91E63),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "You are in guest mode! 🔑",
+                                            color = Color(0xFFE91E63),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Please sign up in aura app for full access",
+                                        color = Color(0xFFE91E63),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "আপনি বর্তমানে গেস্ট মোডে আছেন! ওড়া অ্যাপের সম্পূর্ণ সুবিধা পেতে দয়া করে এখনই সাইন আপ বা রেজিস্টার করুন। ✨🚀",
+                                        color = Color.DarkGray,
+                                        fontSize = 11.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Button(
+                                        onClick = {
+                                            viewModel.clearDeepLinkPost()
+                                            viewModel.setViewingAsGuest(false)
+                                            viewModel.navigateTo(Screen.Welcome)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63)),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(28.dp)
+                                    ) {
+                                        Text(
+                                            text = "Sign Up Now / Register 💜",
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
                             }
                         }
 
@@ -8479,40 +8588,58 @@ fun FeedsTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
-                        .shadow(4.dp, RoundedCornerShape(12.dp)),
+                        .shadow(8.dp, RoundedCornerShape(16.dp)),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E8FF)),
-                    border = BorderStroke(1.5.dp, Color(0xFF7C4DFF))
+                    border = BorderStroke(2.dp, Color(0xFF7C4DFF))
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(Color(0xFF7C4DFF), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "You are in guest mode, Please sign up in aura app for full access 🔑🔐",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF4C1D95),
+                                    fontSize = 13.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Guest Mode Active 🔑🔒",
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4C1D95),
-                                fontSize = 14.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Having an active account on Aura unlocks full features. Tap to create or sign in!",
+                                text = "আপনি বর্তমানে গেস্ট মোডে আছেন। সম্পূর্ণ অ্যাক্সেস, পার্সোনাল সিকিউর স্পেস, চ্যাট এবং লাইক-কমেন্ট করার জন্য দয়া করে ওড়া অ্যাপে রেজিস্টার করুন! 💜✨",
                                 fontSize = 11.sp,
-                                color = Color.DarkGray
+                                color = Color.DarkGray,
+                                lineHeight = 15.sp
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Button(
                             onClick = {
                                 viewModel.setViewingAsGuest(false)
-                                android.widget.Toast.makeText(context, "Welcome back to your master account! 💜", android.widget.Toast.LENGTH_SHORT).show()
+                                viewModel.navigateTo(Screen.Welcome)
+                                android.widget.Toast.makeText(context, "Let's Register using Discord! 💜✨", android.widget.Toast.LENGTH_SHORT).show()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C4DFF)),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Text("Join App 💜", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("Join aura 💜", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -8520,101 +8647,103 @@ fun FeedsTab(
         }
 
         // Step 1: Facebook-style "What's on your mind?" composer bar
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(top = 12.dp, bottom = 8.dp)
-            ) {
-                Row(
+        if (!state.isViewingAsGuest) {
+            item {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color.White)
+                        .padding(top = 12.dp, bottom = 8.dp)
                 ) {
-                    ProfileAvatar(
-                        avatarId = currentUser?.avatarUrl ?: "avatar_user_main", 
-                        size = 40,
-                        showOnlineStatus = true,
-                        fallbackName = currentUser?.displayName
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    TextField(
-                        value = quickPostText,
-                        onValueChange = { quickPostText = it },
-                        placeholder = { Text("What's on your mind?") },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFF0F2F5),
-                            unfocusedContainerColor = Color(0xFFF0F2F5),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
-                        ),
-                        shape = RoundedCornerShape(22.dp),
-                        trailingIcon = {
-                            if (quickPostText.isNotEmpty() || quickPostImage.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        viewModel.publishPostDirectly(quickPostText, quickPostImage)
-                                        quickPostText = ""
-                                        quickPostImage = ""
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Send, 
-                                        contentDescription = "Post instantly", 
-                                        tint = LavenderPrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.width(4.dp))
-                    
-                    // Photo attach gallery button (themed green just like facebook)
-                    IconButton(
-                        onClick = { showAttachImageDialog = true }
-                    ) {
-                        Icon(
-                            imageVector = if (quickPostImage.isNotEmpty()) Icons.Filled.PhotoLibrary else Icons.Default.Image,
-                            contentDescription = "Gallery photo attachment",
-                            tint = if (quickPostImage.isNotEmpty()) LavenderPrimary else Color(0xFF45BD62),
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-                
-                if (quickPostImage.isNotBlank()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                            .background(LavenderPrimary.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CheckCircle, null, tint = LavenderPrimary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Image attached successfully! ✨", fontSize = 11.sp, color = LavenderPrimary, fontWeight = FontWeight.Bold)
-                        }
-                        IconButton(onClick = { quickPostImage = "" }, modifier = Modifier.size(20.dp)) {
-                            Icon(Icons.Default.Clear, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                        ProfileAvatar(
+                            avatarId = currentUser?.avatarUrl ?: "avatar_user_main", 
+                            size = 40,
+                            showOnlineStatus = true,
+                            fallbackName = currentUser?.displayName
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        TextField(
+                            value = quickPostText,
+                            onValueChange = { quickPostText = it },
+                            placeholder = { Text("What's on your mind?") },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFFF0F2F5),
+                                unfocusedContainerColor = Color(0xFFF0F2F5),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(22.dp),
+                            trailingIcon = {
+                                if (quickPostText.isNotEmpty() || quickPostImage.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            viewModel.publishPostDirectly(quickPostText, quickPostImage)
+                                            quickPostText = ""
+                                            quickPostImage = ""
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Send, 
+                                            contentDescription = "Post instantly", 
+                                            tint = LavenderPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        // Photo attach gallery button (themed green just like facebook)
+                        IconButton(
+                            onClick = { showAttachImageDialog = true }
+                        ) {
+                            Icon(
+                                imageVector = if (quickPostImage.isNotEmpty()) Icons.Filled.PhotoLibrary else Icons.Default.Image,
+                                contentDescription = "Gallery photo attachment",
+                                tint = if (quickPostImage.isNotEmpty()) LavenderPrimary else Color(0xFF45BD62),
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
+                    
+                    if (quickPostImage.isNotBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                                .background(LavenderPrimary.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CheckCircle, null, tint = LavenderPrimary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Image attached successfully! ✨", fontSize = 11.sp, color = LavenderPrimary, fontWeight = FontWeight.Bold)
+                            }
+                            IconButton(onClick = { quickPostImage = "" }, modifier = Modifier.size(20.dp)) {
+                                Icon(Icons.Default.Clear, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Divider(color = Color(0xFFF0F2F5), thickness = 6.dp)
                 }
-                
-                Spacer(modifier = Modifier.height(10.dp))
-                Divider(color = Color(0xFFF0F2F5), thickness = 6.dp)
             }
         }
 
@@ -11670,6 +11799,16 @@ fun AppwriteConsoleTab(
     state: AuraUiState,
     viewModel: AuraViewModel
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE) }
+    var editEndpoint by remember { mutableStateOf(viewModel.cleanAppwriteEndpoint) }
+    var editProject by remember { mutableStateOf(viewModel.cleanAppwriteProjectId) }
+    var editDatabaseId by remember { mutableStateOf(viewModel.cleanAppwriteDatabaseId) }
+    var editBucketId by remember { mutableStateOf(viewModel.cleanAppwriteBucketId) }
+    var editShareUrl by remember { mutableStateOf(prefs.getString("appwrite_url", "") ?: "") }
+    var saveMessage by remember { mutableStateOf("") }
+    var isSaving by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxSize()
@@ -11748,11 +11887,16 @@ fun AppwriteConsoleTab(
                         "wss://cloud.appwrite.io/v1/realtime"
                     }
                     
+                    val resolvedShareUrl = context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
+                        .getString("appwrite_url", "") ?: ""
+                    val activeLinkHub = if (resolvedShareUrl.isBlank()) "Default (Production Hub)" else resolvedShareUrl
+
                     listOf(
                         "Active Appwrite Endpoint" to resolvedEndpoint,
                         "Active Project ID" to resolvedProject,
                         "Active Database ID" to viewModel.cleanAppwriteDatabaseId,
                         "Active Storage Bucket ID" to viewModel.cleanAppwriteBucketId,
+                        "Active Link Preview Hub" to activeLinkHub,
                         "Realtime wss Connection" to realtimeSocket,
                         "Client Package Name" to "com.imrul.aura",
                         "Appwrite SDK Core Version" to "5.0.0"
@@ -11773,13 +11917,6 @@ fun AppwriteConsoleTab(
 
             // Edit Credentials form block
             item {
-                var editEndpoint by remember { mutableStateOf(viewModel.cleanAppwriteEndpoint) }
-                var editProject by remember { mutableStateOf(viewModel.cleanAppwriteProjectId) }
-                var editDatabaseId by remember { mutableStateOf(viewModel.cleanAppwriteDatabaseId) }
-                var editBucketId by remember { mutableStateOf(viewModel.cleanAppwriteBucketId) }
-                var saveMessage by remember { mutableStateOf("") }
-                var isSaving by remember { mutableStateOf(false) }
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -11873,15 +12010,34 @@ fun AppwriteConsoleTab(
                             .testTag("appwrite_bucket_id_input")
                     )
 
+                    OutlinedTextField(
+                        value = editShareUrl,
+                        onValueChange = { editShareUrl = it },
+                        label = { Text("Web preview Link Hub Domain (Supabase or custom)", color = Color.Gray) },
+                        placeholder = { Text("e.g. https://your-project.supabase.co/functions/v1/aura-share") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = LavenderPrimary,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                            .testTag("appwrite_url_preview_input")
+                    )
+
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Button(
                         onClick = {
                             isSaving = true
                             val success = viewModel.updateAppwriteSettings(editEndpoint, editProject, editDatabaseId, editBucketId)
+                            prefs.edit().putString("appwrite_url", editShareUrl.trim()).apply()
                             isSaving = false
                             saveMessage = if (success) {
-                                "Appwrite configuration updated successfully! Re-initializing SDK."
+                                "Appwrite & Sharing Link configurations updated successfully!"
                             } else {
                                 "Error: Fields cannot be empty."
                             }
@@ -11901,10 +12057,12 @@ fun AppwriteConsoleTab(
                     OutlinedButton(
                         onClick = {
                             viewModel.resetAppwriteSettingsToDefault()
+                            prefs.edit().putString("appwrite_url", "").apply()
                             editEndpoint = viewModel.cleanAppwriteEndpoint
                             editProject = viewModel.cleanAppwriteProjectId
                             editDatabaseId = viewModel.cleanAppwriteDatabaseId
                             editBucketId = viewModel.cleanAppwriteBucketId
+                            editShareUrl = ""
                             saveMessage = "Appwrite configurations reset to production defaults!"
                         },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.LightGray),
@@ -12120,12 +12278,12 @@ fun PostCard(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
-    var showShareSimulationDialog by remember { mutableStateOf(false) }
+    var showShareSimulationDialog = false
     val checkInteractions = { onSucceed: () -> Unit ->
         if (state.isViewingAsGuest) {
             android.widget.Toast.makeText(
                 context, 
-                "You must create a profile and log in to interact with this post! 💜🔐", 
+                "আপনি বর্তমানে গেস্ট মোডে আছেন! লাইক, কমেন্ট বা শেয়ার করতে ওড়া অ্যাপে দয়া করে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up to interact with posts!)", 
                 android.widget.Toast.LENGTH_LONG
             ).show()
         } else {
@@ -12551,52 +12709,7 @@ fun PostCard(
                         .weight(1f)
                         .fillMaxHeight()
                         .clickable { 
-                            // Direct social-optimized share using Appwrite dynamic open-graph redirection
-                            try {
-                                val savedUrl = context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
-                                    .getString("appwrite_url", "") ?: ""
-                                val baseFunctionUrl = if (savedUrl.isNotBlank()) savedUrl.trim() else "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
-                                val cleanBaseUrl = if (baseFunctionUrl.endsWith("/")) baseFunctionUrl.dropLast(1) else baseFunctionUrl
-
-                                val rawImage = post.imageUrl.split(",").firstOrNull { it.isNotBlank() } ?: ""
-                                val isLocalUri = rawImage.startsWith("content://") || rawImage.startsWith("file://") || !rawImage.startsWith("http")
-                                val elegantLavenderBackdrop = if (isLocalUri || rawImage.isBlank()) {
-                                    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
-                                } else {
-                                    rawImage
-                                }
-
-                                val nameB64 = android.util.Base64.encodeToString(
-                                    (post.authorName).toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
-                                )
-                                val titleB64 = android.util.Base64.encodeToString(
-                                    ("${post.authorName}'s Aura Post").toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
-                                )
-                                val descB64 = android.util.Base64.encodeToString(
-                                    (post.content).toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
-                                )
-                                val imgB64 = android.util.Base64.encodeToString(
-                                    elegantLavenderBackdrop.toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
-                                )
-
-                                val shareableLink = "$cleanBaseUrl?postId=${post.postId}&n=$nameB64&t=$titleB64&d=$descB64&i=$imgB64"
-
-                                val shareIntent = android.content.Intent().apply {
-                                    action = android.content.Intent.ACTION_SEND
-                                    type = "text/plain"
-                                    putExtra(
-                                        android.content.Intent.EXTRA_TEXT, 
-                                        "Check out ${post.authorName}'s post on Aura! 💜✨\n\n\"${post.content}\"\n\n🔗 View Post & Photo:\n$shareableLink\n\n📥 Download the official APK here:\nhttps://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
-                                    )
-                                }
-                                val chooser = android.content.Intent.createChooser(shareIntent, "Share Post")
-                                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(chooser)
-                            } catch(e: Exception) {}
+                            shareAuraPost(context, post, state.isViewingAsGuest)
                         }
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.Center,
@@ -12606,13 +12719,45 @@ fun PostCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Share", color = Color.DarkGray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
-                if (false) {
+                if (showShareSimulationDialog) {
                     androidx.compose.ui.window.Dialog(
                         onDismissRequest = { showShareSimulationDialog = false },
                         properties = androidx.compose.ui.window.DialogProperties(
                             usePlatformDefaultWidth = false
                         )
                     ) {
+                        val savedUrl = context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
+                            .getString("appwrite_url", "") ?: ""
+                        val baseFunctionUrl = if (savedUrl.isNotBlank()) savedUrl.trim() else "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
+                        val cleanBaseUrl = if (baseFunctionUrl.endsWith("/")) baseFunctionUrl.dropLast(1) else baseFunctionUrl
+
+                        val rawImage = post.imageUrl.split(",").firstOrNull { it.isNotBlank() } ?: ""
+                        val isLocalUri = rawImage.startsWith("content://") || rawImage.startsWith("file://") || !rawImage.startsWith("http")
+                        val elegantLavenderBackdrop = if (isLocalUri || rawImage.isBlank()) {
+                            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+                        } else {
+                            rawImage
+                        }
+
+                        val nameB64 = android.util.Base64.encodeToString(
+                            (post.authorName).toByteArray(Charsets.UTF_8),
+                            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+                        )
+                        val titleB64 = android.util.Base64.encodeToString(
+                            ("${post.authorName}'s Aura Post").toByteArray(Charsets.UTF_8),
+                            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+                        )
+                        val descB64 = android.util.Base64.encodeToString(
+                            (post.content).toByteArray(Charsets.UTF_8),
+                            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+                        )
+                        val imgB64 = android.util.Base64.encodeToString(
+                            elegantLavenderBackdrop.toByteArray(Charsets.UTF_8),
+                            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+                        )
+
+                        val dynamicShareableLink = "$cleanBaseUrl?postId=${post.postId}&n=$nameB64&t=$titleB64&d=$descB64&i=$imgB64"
+
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth(0.95f)
@@ -12809,7 +12954,7 @@ fun PostCard(
                                                                 Spacer(modifier = Modifier.height(4.dp))
                                                                 
                                                                 Text(
-                                                                    text = "aura.com/shared_post/${post.postId}",
+                                                                    text = cleanBaseUrl.substringAfter("://") + "/?postId=${post.postId}",
                                                                     color = Color(0xFFA5B4FC),
                                                                     fontSize = 11.sp,
                                                                     fontWeight = FontWeight.SemiBold
@@ -12862,7 +13007,7 @@ fun PostCard(
                                                         )
                                                         Spacer(modifier = Modifier.height(4.dp))
                                                         Text(
-                                                            text = "🌐 Web Link: https://aura.com/shared_post/${post.postId}\n🔮 App Scheme: aura://post/${post.postId}",
+                                                            text = "🌐 Web Link: $dynamicShareableLink\n🔮 App Scheme: aura://post/${post.postId}",
                                                             fontSize = 11.sp,
                                                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                                             color = Color.DarkGray
@@ -12878,7 +13023,7 @@ fun PostCard(
                                                         val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                                         val imgUrls = if (post.imageUrl.isNotBlank()) post.imageUrl.split(",").filter { it.isNotBlank() } else emptyList()
                                                         val imgSection = if (imgUrls.isNotEmpty()) "\n📸 Photos:\n" + imgUrls.joinToString("\n") else ""
-                                                        val clipboardText = "Check out ${post.authorName}'s post on Aura! 💜✨\n\nContent: \"${post.content}\"\n$imgSection\n\n🌐 Open in Aura (Web): https://aura.com/shared_post/${post.postId}\n🔮 Open Direct in Aura (APK): aura://post/${post.postId}"
+                                                        val clipboardText = "Check out ${post.authorName}'s post on Aura! 💜✨\n\nContent: \"${post.content}\"\n$imgSection\n\n🌐 Open in Aura (Web): $dynamicShareableLink\n🔮 Open Direct in Aura (APK): aura://post/${post.postId}"
                                                         val clip = android.content.ClipData.newPlainText("Aura Post Link", clipboardText)
                                                         clipboard.setPrimaryClip(clip)
                                                         android.widget.Toast.makeText(context, "Copied formatted link and custom scheme!", android.widget.Toast.LENGTH_SHORT).show()
@@ -12904,7 +13049,7 @@ fun PostCard(
                                                                 type = "text/plain"
                                                                 putExtra(
                                                                     android.content.Intent.EXTRA_TEXT,
-                                                                    "Check out ${post.authorName}'s post on Aura! 💜✨\n\nContent: \"${post.content}\"\n$imgSection\n\n🌐 Open in Aura Web: https://aura.com/shared_post/${post.postId}\n🔮 Open Direct APK Entry: aura://post/${post.postId}"
+                                                                    "Check out ${post.authorName}'s post on Aura! 💜✨\n\nContent: \"${post.content}\"\n$imgSection\n\n🌐 Open in Aura Web: $dynamicShareableLink\n🔮 Open Direct APK Entry: aura://post/${post.postId}"
                                                                 )
                                                             }
                                                             val chooser = android.content.Intent.createChooser(shareIntent, "Share Post")
@@ -15663,6 +15808,101 @@ private fun deleteFromSearchHistory(context: android.content.Context, userId: In
     saveSearchHistory(context, list)
 }
 
+// --- SUB-TABS: VIDEOS Tab empty state view as requested in Bengali/English ---
+@Composable
+fun VideosTab(
+    state: AuraUiState,
+    viewModel: AuraViewModel
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .testTag("videos_tab"),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(LavenderPrimary.copy(alpha = 0.1f))
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .background(LavenderPrimary.copy(alpha = 0.15f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayCircle,
+                        contentDescription = "Videos",
+                        tint = LavenderPrimary,
+                        modifier = Modifier.size(44.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = "কোনো ভিডিও পাওয়া যায়নি ✨",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E1E24),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "ওড়াতে খুব শীঘ্রই ভিডিও ফিচার আসতে চলেছে! রিয়েল-টাইম রিল্স এবং শর্ট ভিডিও দেখতে ও শেয়ার করতে আমাদের পরবর্তী আপডেটের জন্য অপেক্ষা করুন।",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF65676B),
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = {
+                    viewModel.selectTab(MainTab.FEEDS)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = LavenderPrimary,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(30.dp),
+                modifier = Modifier
+                    .height(48.dp)
+                    .testTag("return_home_from_videos_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "হোম ফিডে ফিরে যান",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
 // --- GESTURE TABS SWIPE ENABLER EXTRA COMFORT ---
 fun Modifier.swipeTabGesture(
     currentTab: MainTab,
@@ -15671,7 +15911,7 @@ fun Modifier.swipeTabGesture(
     val tabList = listOf(
         MainTab.FEEDS,
         MainTab.FRIENDS,
-        MainTab.CREATE_POST,
+        MainTab.VIDEOS,
         MainTab.NOTIFICATIONS,
         MainTab.PROFILE
     )
@@ -16203,13 +16443,13 @@ fun AuraShareHubDialog(
     onDismiss: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
-
-    val savedUrl = remember {
-        context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
-            .getString("appwrite_url", "") ?: ""
+    val viewModel = LocalAuraViewModel.current
+    val isViewingAsGuest = if (viewModel != null) {
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        uiState.isViewingAsGuest
+    } else {
+        false
     }
-    var functionUrlInput by remember { mutableStateOf(savedUrl) }
 
     androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
@@ -16220,12 +16460,12 @@ fun AuraShareHubDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.92f)
+                .fillMaxHeight(0.90f)
                 .padding(12.dp)
                 .shadow(16.dp, RoundedCornerShape(24.dp)),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(2.dp, Color(0xFF7C4DFF).copy(alpha = 0.8f))
+            border = BorderStroke(2.5.dp, Color(0xFF7C4DFF).copy(alpha = 0.9f))
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -16245,18 +16485,22 @@ fun AuraShareHubDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp),
+                        .padding(20.dp)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Header Row
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(38.dp)
                                     .background(Color(0xFFF3E8FF), CircleShape)
                                     .wrapContentSize(Alignment.Center)
                             ) {
@@ -16270,16 +16514,16 @@ fun AuraShareHubDialog(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "Aura Unlimited Share Portal",
+                                    text = "Aura Post Share Portal",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 18.sp,
                                     color = Color(0xFF7C4DFF)
                                 )
                                 Text(
-                                    text = "Zero-Database Dynamic Linking Hub",
+                                    text = "Send Same-to-Same Card & Links Natively",
                                     fontSize = 10.sp,
                                     color = Color.Gray,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -16287,7 +16531,7 @@ fun AuraShareHubDialog(
                             onClick = onDismiss,
                             modifier = Modifier
                                 .size(32.dp)
-                                .background(Color(0xFFF3F4F6), CircleShape)
+                                .background(Color(0xFFF1F5F9), CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
@@ -16298,481 +16542,471 @@ fun AuraShareHubDialog(
                         }
                     }
 
-                    var activeTab by remember { mutableStateOf(0) }
+                    // Card Generation Preview Title
+                    Text(
+                        text = "VISUAL CARD PREVIEW 📸✨",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp,
+                        color = Color(0xFF7C4DFF),
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(vertical = 4.dp)
+                    )
 
-                    val tabTitles = listOf("Netlify Deploy ⚡", "Hub Config ⚙️", "Manifest XML 📦", "Why Netlify? 👑")
-
-                    ScrollableTabRow(
-                        selectedTabIndex = activeTab,
-                        containerColor = Color(0xFFF3E8FF),
-                        contentColor = Color(0xFF7C4DFF),
-                        edgePadding = 8.dp,
+                    // Display a mock visual card representing exactly how it looks
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .shadow(1.dp)
+                            .padding(vertical = 8.dp)
+                            .shadow(6.dp, RoundedCornerShape(16.dp)),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(2.dp, Color(0xFF7C4DFF))
                     ) {
-                        tabTitles.forEachIndexed { index, title ->
-                            Tab(
-                                selected = activeTab == index,
-                                onClick = { activeTab = index },
-                                text = { Text(title, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            // Header matching actual post
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(Color(0xFF7C4DFF), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = post.authorName.take(1).uppercase(),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = post.authorName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = Color.Black
+                                    )
+                                    Text(
+                                        text = "Shared Post • Public 🌎",
+                                        fontSize = 10.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = post.content,
+                                fontSize = 12.sp,
+                                color = Color.DarkGray,
+                                lineHeight = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            // Elegant lavender visual card block representing the images
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.linearGradient(
+                                            colors = listOf(Color(0xFF7C4DFF), Color(0xFFFF4081))
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "AURA VIBES ✨",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = "High Fidelity Post Graphic",
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "👉 Join Aura: aura://post/${post.postId}",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7C4DFF),
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "This exact visual card image will be generated in real-time and shared directly as a post attachment!",
+                        fontSize = 10.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        when (activeTab) {
-                            0 -> {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE9D5FF))
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        Text(
-                                            text = "ধাপ ১: Netlify সার্ভারলেস ডিপ্লয়মেন্ট 🚀",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFF7C4DFF)
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = "১. প্রথমে Netlify তে একটি সম্পূর্ণ ফ্রি অ্যাকাউন্ট তৈরি করুন।\n" +
-                                                    "২. ড্যাশবোর্ডে গিয়ে 'Add new site' -> 'Import from existing project' সিলেক্ট করে আপনার গিটহাব কানেক্ট করুন।\n" +
-                                                    "৩. 'Base directory' হিসেবে '/Netlify-Portal' দিন এবং 'Publish directory' ফিল্ডে 'public' সেট করুন।\n" +
-                                                    "৪. 'Deploy site' বাটনে চাপ দিলেই কয়েক সেকেন্ডে আপনার লিঙ্ক পোর্টাল লাইভ হয়ে যাবে!",
-                                            fontSize = 11.sp,
-                                            color = Color.DarkGray,
-                                            lineHeight = 15.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        Text(
-                                            text = "💡 বিস্তারিত নির্দেশিকা এই প্রজেক্টের রুট ডিরেক্টরির '/Netlify-Portal/README.md' ফাইলে দেওয়া হয়েছে!",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF7C4DFF)
-                                        )
-                                    }
-                                }
-                            }
-                            1 -> {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE9D5FF))
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        Text(
-                                            text = "পোর্টাল লিঙ্ক কনফিগারেশন ⚙️",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFF7C4DFF)
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = "আপনার Netlify ডিপ্লয়মেন্ট লিঙ্কটি নিচে পেস্ট করুন। এর ফলে প্রতিবার শেয়ার বাটনে চাপ দিলে অটোমেটিক সঠিক লিঙ্ক তৈরি হবে:",
-                                            fontSize = 10.sp,
-                                            color = Color.DarkGray,
-                                            lineHeight = 13.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                                        androidx.compose.material3.OutlinedTextField(
-                                            value = functionUrlInput,
-                                            onValueChange = { newValue ->
-                                                functionUrlInput = newValue
-                                                context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
-                                                    .edit()
-                                                    .putString("appwrite_url", newValue)
-                                                    .apply()
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(52.dp),
-                                            singleLine = true,
-                                            shape = RoundedCornerShape(10.dp),
-                                            placeholder = {
-                                                Text(
-                                                    text = "e.g. https://my-aura-portal.netlify.app",
-                                                    fontSize = 11.sp,
-                                                    color = Color.Gray
-                                                )
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = Icons.Default.Link,
-                                                    contentDescription = "URL link icon",
-                                                    tint = Color(0xFF7C4DFF),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            },
-                                            trailingIcon = {
-                                                if (functionUrlInput.isNotEmpty()) {
-                                                    IconButton(
-                                                        onClick = {
-                                                            functionUrlInput = ""
-                                                            context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
-                                                                .edit()
-                                                                .putString("appwrite_url", "")
-                                                                .apply()
-                                                        },
-                                                        modifier = Modifier.size(24.dp)
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Close,
-                                                            contentDescription = "Clear",
-                                                            tint = Color.Gray,
-                                                            modifier = Modifier.size(14.dp)
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = Color(0xFF111827),
-                                                unfocusedTextColor = Color(0xFF1E293B),
-                                                focusedBorderColor = Color(0xFF7C4DFF),
-                                                unfocusedBorderColor = Color(0xFFE9D5FF),
-                                                focusedContainerColor = Color.White,
-                                                unfocusedContainerColor = Color.White
-                                            ),
-                                            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp)
-                                        )
-                                    }
-                                }
-                            }
-                            2 -> {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE9D5FF))
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        Text(
-                                            text = "Deep Linking Interceptor 🌐",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFF7C4DFF)
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "AndroidManifest.xml এ এই ফিল্টারটি অলরেডি সেট আছে, যাতে শেয়ার লিঙ্কে ক্লিক করলে অটোমেটিক অ্যাপ চালু হয়:",
-                                            fontSize = 10.sp,
-                                            color = Color.DarkGray,
-                                            lineHeight = 13.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        
-                                        val manifestCode = """
-                                        <intent-filter android:label="Aura Deep Link Gate">
-                                            <action android:name="android.intent.action.VIEW" />
-                                            <category android:name="android.intent.category.DEFAULT" />
-                                            <category android:name="android.intent.category.BROWSABLE" />
-                                            <data android:scheme="aura" android:host="post" />
-                                            <data android:scheme="aura" />
-                                        </intent-filter>
-                                        """.trimIndent()
-
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(Color(0xFF1E1E2E), RoundedCornerShape(8.dp))
-                                                .padding(10.dp)
-                                        ) {
-                                            Text(
-                                                text = manifestCode,
-                                                color = Color(0xFFCDD6F4),
-                                                fontSize = 9.sp,
-                                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            3 -> {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF5FF)),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, Color(0xFFE9D5FF))
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        Text(
-                                            text = "কেন Netlify Serverless সবচেয়ে সেরা? 💎",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFF7C4DFF)
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = "• কোনো ডেটাবেস কানেকশন প্রয়োজন নেই, তাই ১ সেকেন্ডেরও কম সময়ে অত্যন্ত দ্রুত মেটা ট্যাগ জেনারেট করে কার্ড প্রিভিউ শো করে।\n" +
-                                                    "• Netlify-র গ্লোবাল সার্ভারলেস ফাংশন সম্পূর্ণ ফ্রী এবং প্রতিদিন হাজার হাজার ট্রাফিক সহজে হ্যান্ডেল করতে পারে।\n" +
-                                                    "• ক্রলাররা (WhatsApp, FB, Telegram) রিকোয়েস্ট পাঠালে এটি মেটা ট্যাগ রেসপন্স দেয় আর মোবাইল ইউজার সরাসরি লিঙ্কে ক্লিক করলে ফোনে থাকা Aura অ্যাপটি বুস্ট করে ওপেন করে!",
-                                            fontSize = 11.sp,
-                                            color = Color.DarkGray,
-                                            lineHeight = 15.sp
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    // Buttons area
                     Button(
                         onClick = {
-                            try {
-                                val savedBaseUrl = context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
-                                    .getString("appwrite_url", "") ?: ""
-
-                                val baseDomain = if (savedBaseUrl.trim().isNotEmpty()) savedBaseUrl.trim() else "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
-                                val cleanBaseUrl = baseDomain.trimEnd('/')
-
-                                // Encode parameters dynamically to URL safe Base64
-                                val nameB64 = android.util.Base64.encodeToString(
-                                    post.authorName.toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
-                                )
-                                val descB64 = android.util.Base64.encodeToString(
-                                    post.content.toByteArray(Charsets.UTF_8),
-                                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
-                                )
-                                val imgB64 = if (post.imageUrl.startsWith("http")) {
-                                    android.util.Base64.encodeToString(
-                                        post.imageUrl.toByteArray(Charsets.UTF_8),
-                                        android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
-                                    )
-                                } else ""
-
-                                val shareableLink = "$cleanBaseUrl/shared_post/?postId=${post.postId}&n=$nameB64&d=$descB64&i=$imgB64"
-
-                                val shareIntent = android.content.Intent().apply {
-                                    action = android.content.Intent.ACTION_SEND
-                                    type = "text/plain"
-                                    putExtra(
-                                        android.content.Intent.EXTRA_TEXT,
-                                        "Check out ${post.authorName}'s post on Aura! 💜✨\n\n\"${post.content}\"\n\n🔗 View Post & Photo:\n$shareableLink\n\n📥 Download the official APK here:\n$cleanBaseUrl"
-                                    )
-                                }
-                                val chooser = android.content.Intent.createChooser(shareIntent, "Share Post")
-                                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(chooser)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                            shareAuraPost(context, post, isViewingAsGuest)
                         },
-                        modifier = Modifier.fillMaxWidth().height(46.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .shadow(2.dp, RoundedCornerShape(12.dp)),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C4DFF)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Icon(imageVector = Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Share Dynamic Post Link 📡", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(
+                            text = "Share Card to WhatsApp/Messenger 🚀💜",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Dynamic Live App Link Button
+                    OutlinedButton(
+                        onClick = {
+                            val link = "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app/?postId=${post.postId}&guest=true"
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("Aura Guest Link", link)
+                            clipboard.setPrimaryClip(clip)
+                            android.widget.Toast.makeText(context, "Copied Live Guest deep-link! 📋💜", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        border = BorderStroke(1.5.dp, Color(0xFF7C4DFF)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Link, contentDescription = null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Copy Guest Live Deep-Link 📋📎",
+                            color = Color(0xFF7C4DFF),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Download Installer Button
+                    OutlinedButton(
+                        onClick = {
+                            val link = "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("Aura APK Link", link)
+                            clipboard.setPrimaryClip(clip)
+                            android.widget.Toast.makeText(context, "Copied APK installer URL! 📋📲", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        border = BorderStroke(1.5.dp, Color(0xFF7C4DFF)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Copy APK Download Link 📋📲",
+                            color = Color(0xFF7C4DFF),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Close Button
                     Button(
                         onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9CA3AF)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Dismiss", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("Close Sharing Menu", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
+
+
                 }
             }
         }
     }
 }
 
-fun generateAppwriteFunctionTarGz(): ByteArray {
-    val d = "$"
-    val mainJsBytes = """
-// 🚀 100% DATABASE-FREE APPRWRITE CLOUD FUNCTION (main.js)
-// Since you reached your Appwrite Database Limit, we encode post metadata directly in the URL!
-// This function requires ZERO Appwrite Database operations and is incredibly fast!
 
-module.exports = async function (context) {
-    const req = context.req;
-    const res = context.res;
 
-    // 1. Extract the encoded parameters
-    const postId = req.query.postId || '1';
-    const rawTitle = req.query.t || '';
-    const rawDesc = req.query.d || '';
-    const rawImage = req.query.i || '';
+fun createAuraPostBitmap(context: android.content.Context, post: com.example.data.database.PostEntity): android.graphics.Bitmap {
+    val width = 800
+    val height = 800
+    val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+    
+    // Background: Bold White
+    val bgPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.WHITE
+        style = android.graphics.Paint.Style.FILL
+    }
+    canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
+    
+    // Border: Bold Lavender
+    val borderPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#7C4DFF")
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 24f
+    }
+    canvas.drawRect(12f, 12f, width - 12f, height - 12f, borderPaint)
+    
+    // Header Banner
+    val headerBgPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#F3E8FF")
+        style = android.graphics.Paint.Style.FILL
+    }
+    canvas.drawRect(24f, 24f, width - 24f, 100f, headerBgPaint)
+    
+    val titlePaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#7C4DFF")
+        textSize = 32f
+        isFakeBoldText = true
+        isAntiAlias = true
+    }
+    canvas.drawText("💜 AURA SOCIAL NETWORK", 60f, 70f, titlePaint)
+    
+    // Author area
+    val avatarBgPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#7C4DFF")
+        style = android.graphics.Paint.Style.FILL
+        isAntiAlias = true
+    }
+    canvas.drawCircle(100f, 180f, 44f, avatarBgPaint)
+    
+    // Author initial
+    val initialPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.WHITE
+        textSize = 38f
+        isFakeBoldText = true
+        textAlign = android.graphics.Paint.Align.CENTER
+        isAntiAlias = true
+    }
+    val firstChar = post.authorName.take(1).uppercase()
+    canvas.drawText(firstChar, 100f, 193f, initialPaint)
+    
+    // Author Name
+    val authorNamePaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#1F2937")
+        textSize = 34f
+        isFakeBoldText = true
+        isAntiAlias = true
+    }
+    canvas.drawText(post.authorName, 170f, 175f, authorNamePaint)
+    
+    // Secondary metadata (e.g. "Shared post • Public")
+    val metaPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.GRAY
+        textSize = 24f
+        isAntiAlias = true
+    }
+    canvas.drawText("Shared Post • Public 🌎", 170f, 210f, metaPaint)
+    
+    // Post Content Text Wrap
+    val contentPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#1F2937")
+        textSize = 30f
+        isAntiAlias = true
+    }
+    
+    // Simple wrap
+    val words = post.content.split(" ")
+    var line = ""
+    var yPos = 290f
+    val xStart = 60f
+    val maxWidth = width - 120
+    
+    for (word in words) {
+        val testLine = if (line.isEmpty()) word else "$line $word"
+        val measure = contentPaint.measureText(testLine)
+        if (measure > maxWidth) {
+            canvas.drawText(line, xStart, yPos, contentPaint)
+            line = word
+            yPos += 42f
+            if (yPos > 450f) break
+        } else {
+            line = testLine
+        }
+    }
+    if (line.isNotEmpty() && yPos <= 450f) {
+        canvas.drawText(line, xStart, yPos, contentPaint)
+        yPos += 42f
+    }
+    
+    val imageYStart = 430f
+    val imageYEnd = 690f
+    
+    val gradPaint = android.graphics.Paint().apply {
+        shader = android.graphics.LinearGradient(
+            60f, imageYStart, (width - 60).toFloat(), imageYEnd,
+            android.graphics.Color.parseColor("#7C4DFF"),
+            android.graphics.Color.parseColor("#FF4081"),
+            android.graphics.Shader.TileMode.CLAMP
+        )
+        isAntiAlias = true
+    }
+    
+    val rectF = android.graphics.RectF(60f, imageYStart, (width - 60).toFloat(), imageYEnd)
+    canvas.drawRoundRect(rectF, 24f, 24f, gradPaint)
+    
+    val accentPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.WHITE
+        alpha = 40
+        isAntiAlias = true
+    }
+    canvas.drawCircle(220f, imageYStart + 100f, 80f, accentPaint)
+    canvas.drawCircle(width - 200f, imageYEnd - 80f, 60f, accentPaint)
+    
+    val stampPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.WHITE
+        textSize = 42f
+        isFakeBoldText = true
+        textAlign = android.graphics.Paint.Align.CENTER
+        isAntiAlias = true
+    }
+    canvas.drawText("AURA VIBES ✨", (width / 2).toFloat(), imageYStart + 140f, stampPaint)
+    
+    val footerPaint = android.graphics.Paint().apply {
+        color = android.graphics.Color.parseColor("#6B7280")
+        textSize = 25f
+        textAlign = android.graphics.Paint.Align.CENTER
+        isAntiAlias = true
+    }
+    canvas.drawText("👉 Join Aura to interact: aura://post/${post.postId}", (width / 2).toFloat(), 745f, footerPaint)
+    
+    return bitmap
+}
 
-    // 2. Decode Base64 URL-safe parameters to show original details in Rich Previews
-    let title = "Aura Shared Post";
-    let description = "Click to view this complete post inside the Aura App!";
-    let imageUrl = "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800"; // default fallbacks
-
+fun shareAuraPost(context: android.content.Context, post: com.example.data.database.PostEntity, isViewingAsGuest: Boolean = false) {
+    if (isViewingAsGuest) {
+        android.widget.Toast.makeText(
+            context,
+            "আপনি বর্তমানে গেস্ট মোডে আছেন! লাইক, কমেন্ট বা শেয়ার করতে ওড়া অ্যাপে দয়া করে রেজিস্টার করুন। 🔑🔐\n(Guest mode restricted: Please register/sign up to interact with posts!)",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
+        return
+    }
     try {
-        if (rawTitle) {
-            title = Buffer.from(rawTitle, 'base64').toString('utf8');
+        val savedUrl = context.getSharedPreferences("AuraPrefs", android.content.Context.MODE_PRIVATE)
+            .getString("appwrite_url", "") ?: ""
+        val baseFunctionUrl = if (savedUrl.isNotBlank()) savedUrl.trim() else "https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app"
+        val cleanBaseUrl = if (baseFunctionUrl.endsWith("/")) baseFunctionUrl.dropLast(1) else baseFunctionUrl
+
+        val rawImage = post.imageUrl.split(",").firstOrNull { it.isNotBlank() } ?: ""
+        val isLocalUri = rawImage.startsWith("content://") || rawImage.startsWith("file://") || !rawImage.startsWith("http")
+        val elegantLavenderBackdrop = if (isLocalUri || rawImage.isBlank()) {
+            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+        } else {
+            rawImage
         }
-        if (rawDesc) {
-            description = Buffer.from(rawDesc, 'base64').toString('utf8');
+
+        val nameB64 = android.util.Base64.encodeToString(
+            (post.authorName).toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+        )
+        val titleB64 = android.util.Base64.encodeToString(
+            ("Aura Post by ${post.authorName} ✨").toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+        )
+        val shortContent = if (post.content.length > 100) post.content.take(97) + "..." else post.content
+        val descB64 = android.util.Base64.encodeToString(
+            shortContent.toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+        )
+        val imgB64 = android.util.Base64.encodeToString(
+            elegantLavenderBackdrop.toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE
+        )
+
+        // Generate direct custom scheme deep link and fallback web link for ultimate reach
+        val directDeepLink = "aura://post?postId=${post.postId}&n=$nameB64&t=$titleB64&d=$descB64&i=$imgB64"
+        val dynamicShareableLink = "$cleanBaseUrl/?postId=${post.postId}&n=$nameB64&t=$titleB64&d=$descB64&i=$imgB64"
+
+        val caption = "Check out ${post.authorName}'s post on Aura! 💜✨\n\n" +
+                "\"${post.content}\"\n\n" +
+                "🔗 Open directly under Guest Mode (অ্যাপ ইন্সটল থাকলে সরাসরি দেখতে): $directDeepLink\n" +
+                "🔗 Web Preview fallback (ক্রোম বা ব্রাউজারে দেখতে): $dynamicShareableLink\n\n" +
+                "✨ (Aura App-এর ইনস্টলার .apk ফাইলটি এই মেসেজের সাথে যুক্ত করা আছে! যদি ইনস্টল করা না থাকে, তাহলে মেসেজ থেকে সরাসরি ইনস্টল করে নিন! 🚀)"
+
+        // Load the running APK file directly from packageCodePath
+        val srcApkFile = java.io.File(context.packageCodePath)
+        val cacheApkFile = java.io.File(context.cacheDir, "AuraApp_Installer.apk")
+        
+        try {
+            if (!cacheApkFile.exists() || cacheApkFile.length() != srcApkFile.length()) {
+                srcApkFile.copyTo(cacheApkFile, overwrite = true)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AuraShare", "Could not copy running APK to cache: ${e.message}")
         }
-        if (rawImage) {
-            imageUrl = Buffer.from(rawImage, 'base64').toString('utf8');
-        }
-    } catch (e) {
-        context.error("Base64 decoding failed: " + e.message);
+
+        // Display a gorgeous standard AlertDialog to choose sharing mechanism (100% compile safe)
+        val options = arrayOf(
+            "১. সোশ্যাল মিডিয়া প্রিভিউ লিংক (WhatsApp / Messenger - Recommended 🔗)",
+            "২. APK ফাইল + সম্পূর্ণ পোস্ট নিয়ে অফলাইন শেয়ার (Direct APK 📦)"
+        )
+
+        val builder = android.app.AlertDialog.Builder(context)
+        builder.setTitle("পোস্টটি শেয়ার করার মাধ্যম নির্বাচন করুন")
+        builder.setItems(options, android.content.DialogInterface.OnClickListener { _, which ->
+            if (which == 0) {
+                // Option 1: Just share the text containing URL. Highly optimized for WhatsApp card rendering
+                val justLinkCaption = "Check out ${post.authorName}'s post on Aura! 💜✨\n\n" +
+                        "\"${post.content}\"\n\n" +
+                        "🔗 Open Post: $dynamicShareableLink"
+
+                val linkIntent = android.content.Intent().apply {
+                    action = android.content.Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, justLinkCaption)
+                }
+                val chooser = android.content.Intent.createChooser(linkIntent, "Share Web Preview Link")
+                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+            } else {
+                // Option 2: Share full bundle with raw APK attachment file stream
+                val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "com.example.fileprovider",
+                    cacheApkFile
+                )
+
+                val shareIntent = android.content.Intent().apply {
+                    action = android.content.Intent.ACTION_SEND
+                    type = "application/vnd.android.package-archive"
+                    putExtra(android.content.Intent.EXTRA_TEXT, caption)
+                    putExtra(android.content.Intent.EXTRA_STREAM, apkUri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                val chooser = android.content.Intent.createChooser(shareIntent, "Share Aura Post & App Installer")
+                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+            }
+        })
+        builder.setNegativeButton("বাতিল (Cancel)", null)
+        val dialog = builder.create()
+        dialog.show()
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "Failed to share: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
     }
-
-    // 3. Render dynamic HTML document containing standard Open Graph (OG) meta tags
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${d}{title}</title>
-    
-    <!-- Open Graph OG tags for WhastApp, Facebook & Telegram previews -->
-    <meta property="og:title" content="${d}{title}" />
-    <meta property="og:description" content="${d}{description}" />
-    <meta property="og:image" content="${d}{imageUrl}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="Aura" />
-
-    <!-- Twitter Previews -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${d}{title}" />
-    <meta name="twitter:description" content="${d}{description}" />
-    <meta name="twitter:image" content="${d}{imageUrl}" />
-
-    <!-- JavaScript deep-linking engine redirecting directly to your Applet -->
-    <script>
-        window.onload = function() {
-            // Trigger Android Deep Link Interceptor
-            window.location.href = 'aura://post/' + '${d}{postId}';
-            
-            // Redirect fallback for users who don't have the app yet
-            setTimeout(function() {
-                window.location.href = 'https://ais-pre-inawwf2545flos3colouiz-78211575748.asia-southeast1.run.app';
-            }, 2500);
-        };
-    </script>
-</head>
-<body style="font-family: -apple-system, sans-serif; background: #FAF5FF; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; color: #7C4DFF;">
-    <div style="padding: 24px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(124, 77, 255, 0.15); max-width: 400px; margin: 16px; border: 2px solid #F3E8FF;">
-        <h2 style="margin: 0 0 12px 0;">Opening inside Aura...</h2>
-        <p style="color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">Attempting to launch Aura App on your Android device. If you don't have the app installed, please download the APK!</p>
-        <div style="width: 32px; height: 32px; border: 3px solid #F3E8FF; border-top-color: #7C4DFF; border-radius: 50%; animation: spin 1s infinite linear; display: inline-block;"></div>
-        <style>@keyframes spin {100% {transform: rotate(360deg);}}</style>
-    </div>
-</body>
-</html>`;
-
-    return res.html(html);
-};
-""".trimIndent().toByteArray(Charsets.UTF_8)
-
-    val packageJsonBytes = """
-{
-  "name": "aura-share-hub",
-  "version": "1.0.0",
-  "description": "Infinite database-free Aura share previews",
-  "main": "main.js",
-  "dependencies": {}
-}
-""".trimIndent().toByteArray(Charsets.UTF_8)
-
-    val bos = java.io.ByteArrayOutputStream()
-    val gzos = java.util.zip.GZIPOutputStream(bos)
-
-    fun writeTarEntry(name: String, content: ByteArray) {
-        val header = createTarHeader(name, content.size.toLong())
-        gzos.write(header)
-        gzos.write(content)
-        val remainder = (content.size % 512)
-        if (remainder > 0) {
-            gzos.write(ByteArray(512 - remainder))
-        }
-    }
-
-    writeTarEntry("main.js", mainJsBytes)
-    writeTarEntry("package.json", packageJsonBytes)
-
-    gzos.write(ByteArray(1024))
-    gzos.finish()
-    gzos.close()
-
-    return bos.toByteArray()
-}
-
-fun createNullTerminatedBytes(str: String): ByteArray {
-    val stringBytes = str.toByteArray(Charsets.UTF_8)
-    val result = ByteArray(stringBytes.size + 1)
-    System.arraycopy(stringBytes, 0, result, 0, stringBytes.size)
-    result[stringBytes.size] = 0.toByte()
-    return result
-}
-
-fun createTarHeader(name: String, size: Long): ByteArray {
-    val header = ByteArray(512)
-    val nameBytes = name.toByteArray(Charsets.UTF_8)
-    System.arraycopy(nameBytes, 0, header, 0, minOf(nameBytes.size, 99))
-    
-    val modeBytes = createNullTerminatedBytes("0000644")
-    System.arraycopy(modeBytes, 0, header, 100, minOf(modeBytes.size, 8))
-    
-    val uidBytes = createNullTerminatedBytes("0000000")
-    System.arraycopy(uidBytes, 0, header, 108, minOf(uidBytes.size, 8))
-    
-    val gidBytes = createNullTerminatedBytes("0000000")
-    System.arraycopy(gidBytes, 0, header, 116, minOf(gidBytes.size, 8))
-    
-    val octalSize = String.format(java.util.Locale.US, "%011o", size)
-    val sizeBytes = createNullTerminatedBytes(octalSize)
-    System.arraycopy(sizeBytes, 0, header, 124, minOf(sizeBytes.size, 12))
-    
-    val mtimeBytes = createNullTerminatedBytes("14141414141")
-    System.arraycopy(mtimeBytes, 0, header, 136, minOf(mtimeBytes.size, 12))
-    
-    for (i in 148 until 156) {
-        header[i] = ' '.toByte()
-    }
-    header[156] = '0'.toByte()
-    
-    val magicBytes = createNullTerminatedBytes("ustar")
-    System.arraycopy(magicBytes, 0, header, 257, minOf(magicBytes.size, 6))
-    
-    header[263] = '0'.toByte()
-    header[264] = '0'.toByte()
-    
-    var checksum = 0L
-    for (b in header) {
-        checksum += (b.toInt() and 0xFF)
-    }
-    
-    val checksumStr = String.format(java.util.Locale.US, "%06o", checksum)
-    val checksumBytes = ByteArray(8)
-    val chBytes = checksumStr.toByteArray()
-    System.arraycopy(chBytes, 0, checksumBytes, 0, minOf(chBytes.size, 6))
-    checksumBytes[6] = 0.toByte()
-    checksumBytes[7] = ' '.toByte()
-    System.arraycopy(checksumBytes, 0, header, 148, 8)
-    
-    return header
 }
 

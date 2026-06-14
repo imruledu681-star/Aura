@@ -1473,7 +1473,7 @@
 
             <div class="downloads-container">
                 <!-- Option 1: Direct APK -->
-                <a href="./app-debug.apk" class="download-option" download="app-debug.apk">
+                <a href="./APK_DOWNLOAD/app-debug.apk" class="download-option" download="app-debug.apk">
                     <div class="download-left">
                         <div class="dl-icon-container apk"><i class="fa-brands fa-android"></i></div>
                         <div class="dl-info">
@@ -1486,7 +1486,7 @@
                 </a>
 
                 <!-- Option 2: Uncompressed ZIP -->
-                <a href="./app-debug-apk.zip" class="download-option" download="app-debug-apk.zip">
+                <a href="./APK_DOWNLOAD/app-debug-apk.zip" class="download-option" download="app-debug-apk.zip">
                     <div class="download-left">
                         <div class="dl-icon-container zip"><i class="fa-solid fa-file-zipper"></i></div>
                         <div class="dl-info">
@@ -1498,7 +1498,7 @@
                 </a>
 
                 <!-- Option 3: BIN Fallback -->
-                <a href="./app-debug-apk.bin" class="download-option" download="app-debug-apk.bin">
+                <a href="./APK_DOWNLOAD/app-debug-apk.bin" class="download-option" download="app-debug-apk.bin">
                     <div class="download-left">
                         <div class="dl-icon-container fallback"><i class="fa-solid fa-box-open"></i></div>
                         <div class="dl-info">
@@ -1507,6 +1507,19 @@
                         </div>
                     </div>
                     <div class="dl-indicator"><i class="fa-solid fa-download"></i></div>
+                </a>
+
+                <!-- Option 4: Ultra-Secure Raw Text Fallback (Bypasses Proxy Compression completely and remains in ZIP Export) -->
+                <a href="./APK_DOWNLOAD/app-debug-apk-raw.txt" class="download-option" download="app-debug.apk">
+                    <div class="download-left">
+                        <div class="dl-icon-container" style="background: linear-gradient(135deg, #7C4DFF, #9575CD); color: #FFFFFF;"><i class="fa-solid fa-file-shield"></i></div>
+                        <div class="dl-info">
+                            <span class="dl-title" style="color: #6200EE; font-weight: 800;">১০০% সুরক্ষিত র টেক্সট রিনেমার ইনস্টলার (app-debug.apk)</span>
+                            <span class="dl-tagline" style="color: #3700B3; font-weight: 600;">সবচেয়ে নিরাপদ ও সুরক্ষিত বিকল্প। প্রক্সি সার্ভারের কোনো প্রকার সংকুচিত বা করাপ্ট করা ছাড়াই ব্রাউজার দ্বারা অটোমেটিক রিনেম হয়ে .apk ফাইলে রুপান্তরিত হবে!</span>
+                            <span class="dl-tag" style="background-color: #E8E5FF; color: #7C4DFF; border: 1.5.dp solid #7C4DFF;">বিকল্প ব্যাকআপ ও জিপ এক্সপোর্ট সুরক্ষিত / RECOVERY BACKUP</span>
+                        </div>
+                    </div>
+                    <div class="dl-indicator" style="color: #7C4DFF;"><i class="fa-solid fa-cloud-arrow-down"></i></div>
                 </a>
             </div>
         </div>
@@ -1539,7 +1552,7 @@
                     </li>
                     <li class="step-li">
                         <div class="step-bullet">৪</div>
-                        <div class="step-text">ইনস্টল সম্পন্ন হলে aura অ্যাপটি চালু করুন ও গেস্ট বা ডিসকورد দিয়ে ভেরিফাই সম্পন্ন করে দুর্দান্ত ফিড ইন্টারঅ্যাকশন উপভোগ করুন! 🎉</div>
+                        <div class="step-text">ইনস্টল সম্পন্ন হলে aura অ্যাপটি চালু করুন ও গেস্ট বা ডিসকর্ড দিয়ে ভেরিফাই সম্পন্ন করে দুর্দান্ত ফিড ইন্টারঅ্যাকশন উপভোগ করুন! 🎉</div>
                     </li>
                 </ol>
             </div>
@@ -1678,10 +1691,35 @@
                 avatarBox.style.color = '#FFFFFF';
 
                 // Set post attachment image
-                if (decodedImageUrl && decodedImageUrl.startsWith('http')) {
-                    const imgEl = document.getElementById('postImageItem');
-                    imgEl.src = decodedImageUrl;
-                    document.getElementById('postImageWrapper').style.display = 'block';
+                if (decodedImageUrl) {
+                    const images = decodedImageUrl.split(',').map(x => x.trim()).filter(x => x.startsWith('http'));
+                    const wrapper = document.getElementById('postImageWrapper');
+                    wrapper.innerHTML = ''; // clear initial img element
+                    if (images.length > 0) {
+                        wrapper.style.display = 'grid';
+                        if (images.length === 1) {
+                            wrapper.style.gridTemplateColumns = '1fr';
+                        } else if (images.length === 2) {
+                            wrapper.style.gridTemplateColumns = '1fr 1fr';
+                            wrapper.style.gap = '8px';
+                        } else {
+                            wrapper.style.gridTemplateColumns = '1fr 1fr';
+                            wrapper.style.gap = '8px';
+                        }
+                        images.forEach(imgUrl => {
+                            const img = document.createElement('img');
+                            img.src = imgUrl;
+                            img.alt = 'Aura Attachment';
+                            img.className = 'post-img';
+                            img.style.width = '100%';
+                            img.style.height = '240px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '12px';
+                            wrapper.appendChild(img);
+                        });
+                    } else {
+                        wrapper.style.display = 'none';
+                    }
                 }
 
                 // Apply randomized but realistic stat indices based on postId to simulate real social values
@@ -2030,7 +2068,6 @@
             }
         }
 
-        // Helper escape HTML
         function escapeHTML(str) {
             return str.replace(/[&<>'"]/g, 
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)

@@ -38,6 +38,7 @@ sealed class Screen {
 enum class MainTab {
     FEEDS,
     FRIENDS,
+    VIDEOS,
     CREATE_POST,
     NOTIFICATIONS,
     PROFILE,
@@ -412,8 +413,8 @@ class AuraViewModel(
             }
         }
 
-        // 1. Restore Avatar from MediaStore backup if missing
-        if (isLocalFileMissing(finalAvatar) || finalAvatar.startsWith("content://") || finalAvatar.startsWith("http") || finalAvatar == "avatar_user_main" || finalAvatar.isBlank()) {
+        // 1. Restore Avatar from MediaStore backup if missing (only if not already a cloud hosted HTTP URL)
+        if ((isLocalFileMissing(finalAvatar) && !finalAvatar.startsWith("http")) || finalAvatar.startsWith("content://") || finalAvatar == "avatar_user_main" || finalAvatar.isBlank()) {
             val publicAvatarName = "profile_pic_${cleanEmail}_backup.jpg"
             val mediaStoreAvatar = findImageInMediaStore(context, publicAvatarName)
             if (mediaStoreAvatar.isNotBlank()) {
@@ -426,8 +427,8 @@ class AuraViewModel(
             }
         }
 
-        // 2. Restore Cover from MediaStore backup if missing
-        if (isLocalFileMissing(finalCover) || finalCover.startsWith("content://") || finalCover.startsWith("http") || finalCover == "cover_main" || finalCover.isBlank()) {
+        // 2. Restore Cover from MediaStore backup if missing (only if not already a cloud hosted HTTP URL)
+        if ((isLocalFileMissing(finalCover) && !finalCover.startsWith("http")) || finalCover.startsWith("content://") || finalCover == "cover_main" || finalCover.isBlank()) {
             val publicCoverName = "cover_pic_${cleanEmail}_backup.jpg"
             val mediaStoreCover = findImageInMediaStore(context, publicCoverName)
             if (mediaStoreCover.isNotBlank()) {
@@ -1544,6 +1545,10 @@ class AuraViewModel(
         } catch (e: Exception) {
             // Handled
         }
+        
+        // Start live Firebase sync for posts
+        listenForFirebasePosts()
+
         // Prepare database with default high-quality 2026 posts and configurations
         viewModelScope.launch {
             repository.seedMockDataIfEmpty()
@@ -1935,7 +1940,7 @@ class AuraViewModel(
 
     fun handleDeepLinkPostWithData(postId: Int, authorNameB64: String, contentB64: String, imageB64: String) {
         _deepLinkedPostId.value = postId
-        _uiState.update { it.copy(currentScreen = Screen.Main, currentTab = MainTab.FEEDS) }
+        _uiState.update { it.copy(currentScreen = Screen.Main, currentTab = MainTab.FEEDS, isViewingAsGuest = true) }
 
         viewModelScope.launch {
             try {
@@ -2109,18 +2114,90 @@ class AuraViewModel(
 
     // --- Profile Setup, Logins & Demo Sessions ---
 
+    fun updatePublicBackupImage(context: android.content.Context, newUriStr: String, backupFileName: String) {
+        if (newUriStr.isBlank()) return
+        try {
+            val resolver = context.contentResolver
+            val existingUriStr = findImageInMediaStore(context, backupFileName)
+            val imageUri = if (existingUriStr.isNotBlank()) {
+                android.net.Uri.parse(existingUriStr)
+            } else {
+                val imageCollection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    android.provider.MediaStore.Images.Media.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                } else {
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                }
+                val contentValues = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, backupFileName)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/AuraHub")
+                        put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                    }
+                }
+                val inserted = resolver.insert(imageCollection, contentValues)
+                if (inserted != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(inserted, contentValues, null, null)
+                }
+                inserted
+            }
+
+            if (imageUri != null) {
+                val srcUri = android.net.Uri.parse(newUriStr)
+                resolver.openInputStream(srcUri)?.use { inputStream ->
+                    resolver.openOutputStream(imageUri, "wt")?.use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                android.util.Log.d("AuraBackup", "Successfully updated public backup image $backupFileName with new pixels")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("AuraBackup", "Error updating public backup image $backupFileName: ${e.message}")
+        }
+    }
+
     fun updateCurrentUser(user: UserEntity) {
         viewModelScope.launch {
-            repository.updateUser(user)
-            saveProfileToPrefs(user)
+            val cleanEmail = user.email.lowercase().trim()
+            val cleanEmailFileName = cleanEmail.replace("@", "_").replace(".", "_")
+            
+            var finalAvatar = user.avatarUrl
+            var finalCover = user.coverUrl
+            var modified = false
+            
+            if (user.avatarUrl.startsWith("content://") || user.avatarUrl.startsWith("file://")) {
+                val persistentFileName = "profile_pic_${cleanEmailFileName}_updated_${System.currentTimeMillis()}.jpg"
+                val stableLocalPath = copyImageToLocalStorage(user.avatarUrl, persistentFileName)
+                if (stableLocalPath.isNotBlank()) {
+                    finalAvatar = stableLocalPath
+                    modified = true
+                    updatePublicBackupImage(context, user.avatarUrl, "profile_pic_${cleanEmailFileName}_backup.jpg")
+                }
+            }
+            
+            if (user.coverUrl.startsWith("content://") || user.coverUrl.startsWith("file://")) {
+                val persistentFileName = "cover_pic_${cleanEmailFileName}_updated_${System.currentTimeMillis()}.jpg"
+                val stableLocalPath = copyImageToLocalStorage(user.coverUrl, persistentFileName)
+                if (stableLocalPath.isNotBlank()) {
+                    finalCover = stableLocalPath
+                    modified = true
+                    updatePublicBackupImage(context, user.coverUrl, "cover_pic_${cleanEmailFileName}_backup.jpg")
+                }
+            }
+            
+            val updatedUser = if (modified) user.copy(avatarUrl = finalAvatar, coverUrl = finalCover) else user
+            
+            repository.updateUser(updatedUser)
+            saveProfileToPrefs(updatedUser)
             
             // Get credentials password if registered/logged in to perform updated backup
-            val cleanEmail = user.email.lowercase().trim()
             if (cleanEmail.isNotBlank()) {
                 val credentialsPrefs = context.getSharedPreferences("aura_credentials", android.content.Context.MODE_PRIVATE)
                 val savedPassword = credentialsPrefs.getString(cleanEmail, "AuraDiscordSecurePass123!") ?: "AuraDiscordSecurePass123!"
-                backupProfileToPublicStorage(user, savedPassword)
-                backupProfileToImageMediaStore(user, savedPassword)
+                backupProfileToPublicStorage(updatedUser, savedPassword)
+                backupProfileToImageMediaStore(updatedUser, savedPassword)
                 
                 // Keep the appwrite active account prefs matching the updated serialized profile details
                 if (isRealAppwriteEnabled) {
@@ -2133,6 +2210,54 @@ class AuraViewModel(
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("AppwriteSync", "Error in updating appwrite preferences: ${e.message}")
+                    }
+                }
+
+                // Asynchronously upload local photos to cloud and save public URL
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        var updated = false
+                        var finalAvatar = user.avatarUrl
+                        var finalCover = user.coverUrl
+                        
+                        // Check if avatar is local (e.g. content:// or file:// or does not start with http)
+                        if (user.avatarUrl.isNotBlank() && (user.avatarUrl.startsWith("content://") || user.avatarUrl.startsWith("file://"))) {
+                            val cloudAvatarUrl = uploadUriToCloud(user.avatarUrl)
+                            if (cloudAvatarUrl.startsWith("http")) {
+                                finalAvatar = cloudAvatarUrl
+                                updated = true
+                            }
+                        }
+                        
+                        // Check if cover is local (e.g. content:// or file:// or does not start with http)
+                        if (user.coverUrl.isNotBlank() && (user.coverUrl.startsWith("content://") || user.coverUrl.startsWith("file://"))) {
+                            val cloudCoverUrl = uploadUriToCloud(user.coverUrl)
+                            if (cloudCoverUrl.startsWith("http")) {
+                                finalCover = cloudCoverUrl
+                                updated = true
+                            }
+                        }
+                        
+                        if (updated) {
+                            val cloudUser = user.copy(avatarUrl = finalAvatar, coverUrl = finalCover)
+                            
+                            // Save to local sqlite & SharedPreferences
+                            repository.updateUser(cloudUser)
+                            saveProfileToPrefs(cloudUser)
+                            backupProfileToPublicStorage(cloudUser, savedPassword)
+                            backupProfileToImageMediaStore(cloudUser, savedPassword)
+                            
+                            // Save to remote Appwrite preferences
+                            if (isRealAppwriteEnabled) {
+                                val serializedProfile = serializeUserEntityToUri(cloudUser)
+                                appwriteAccount?.let { account ->
+                                    account.updatePrefs(mapOf("photoUrl" to serializedProfile))
+                                    android.util.Log.d("AppwriteSync", "Successfully synced cloud-hosted images to Appwrite.")
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AppwriteSync", "Error uploading edited profile assets: ${e.message}")
                     }
                 }
             }
@@ -2388,21 +2513,42 @@ class AuraViewModel(
                 // Cloud upload profile and cover photos asynchronously in background Dispatchers.IO
                 viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                     try {
-                        val isRealAppwrite = isRealAppwriteEnabled
-                        if (isRealAppwrite) {
+                        var finalAvatar = avatarSource
+                        var finalCover = coverSource
+                        var photoUpdated = false
+                        
+                        if (avatarSource.isNotBlank() && (avatarSource.startsWith("content://") || avatarSource.startsWith("file://"))) {
                             val cloudAvatarUrl = uploadUriToCloud(avatarSource)
+                            if (cloudAvatarUrl.startsWith("http")) {
+                                finalAvatar = cloudAvatarUrl
+                                photoUpdated = true
+                            }
+                        }
+                        
+                        if (coverSource.isNotBlank() && (coverSource.startsWith("content://") || coverSource.startsWith("file://"))) {
                             val cloudCoverUrl = uploadUriToCloud(coverSource)
-                            
-                            val cloudUser = newUser.copy(
-                                userId = generatedId,
-                                avatarUrl = cloudAvatarUrl,
-                                coverUrl = cloudCoverUrl
-                            )
-                            
-                            // Save backup to cloud user store
+                            if (cloudCoverUrl.startsWith("http")) {
+                                finalCover = cloudCoverUrl
+                                photoUpdated = true
+                            }
+                        }
+                        
+                        val cloudUser = newUser.copy(
+                            userId = generatedId,
+                            avatarUrl = finalAvatar,
+                            coverUrl = finalCover
+                        )
+                        
+                        if (photoUpdated) {
+                            // Save backup to SQLite & SharedPreferences and device storage
                             repository.updateUser(cloudUser)
                             saveProfileToPrefs(cloudUser)
+                            backupProfileToPublicStorage(cloudUser, regPasswordText)
+                            backupProfileToImageMediaStore(cloudUser, regPasswordText)
+                        }
 
+                        val isRealAppwrite = isRealAppwriteEnabled
+                        if (isRealAppwrite) {
                             val serializedProfile = serializeUserEntityToUri(cloudUser)
                             appwriteAccount?.let { account ->
                                 account.updateName(cloudUser.displayName)
@@ -2506,6 +2652,7 @@ class AuraViewModel(
                 privacy = state.privacy
             )
             repository.addPost(newPost)
+            syncPostToFirebase(newPost)
             backupUserPostsToPublicStorage(currUser.email)
             // Clear creation state
             _uiState.update {
@@ -2539,11 +2686,13 @@ class AuraViewModel(
                 mentionedUserIds = mentionedUserIds
             )
             repository.addPost(newPost)
+            syncPostToFirebase(newPost)
             backupUserPostsToPublicStorage(currUser.email)
         }
     }
 
     fun toggleLike(post: PostEntity) {
+        if (_uiState.value.isViewingAsGuest) return
         viewModelScope.launch {
             if (post.isLikedByUser) {
                 val updated = post.copy(
@@ -2564,6 +2713,7 @@ class AuraViewModel(
     }
 
     fun selectReaction(post: PostEntity, emoji: String) {
+        if (_uiState.value.isViewingAsGuest) return
         viewModelScope.launch {
             val alreadyLiked = post.isLikedByUser
             val updated = post.copy(
@@ -2628,6 +2778,7 @@ class AuraViewModel(
     }
 
     fun submitComment() {
+        if (_uiState.value.isViewingAsGuest) return
         val postId = _uiState.value.activeCommentsPostId ?: return
         val text = _uiState.value.commentInputText
         if (text.isBlank()) return
@@ -3310,6 +3461,111 @@ class AuraViewModel(
             _screenHistory.value = listOf(Screen.Main)
             saveNavigationState(Screen.Main, listOf(Screen.Main))
             _uiState.update { it.copy(currentScreen = Screen.Main, currentTab = MainTab.FEEDS) }
+        }
+    }
+
+    // --- Firebase Realtime Database Sync for Posts ---
+    fun listenForFirebasePosts() {
+        try {
+            val database = com.google.firebase.database.FirebaseDatabase.getInstance("https://aura-6637b-default-rtdb.firebaseio.com")
+            val postsRef = database.getReference("posts")
+            
+            postsRef.addChildEventListener(object : com.google.firebase.database.ChildEventListener {
+                override fun onChildAdded(snapshot: com.google.firebase.database.DataSnapshot, previousChildName: String?) {
+                    syncSnapshotToLocal(snapshot)
+                }
+                override fun onChildChanged(snapshot: com.google.firebase.database.DataSnapshot, previousChildName: String?) {
+                    syncSnapshotToLocal(snapshot)
+                }
+                override fun onChildRemoved(snapshot: com.google.firebase.database.DataSnapshot) {}
+                override fun onChildMoved(snapshot: com.google.firebase.database.DataSnapshot, previousChildName: String?) {}
+                override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+            })
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseSync", "Error setting up Firebase Realtime Database listener: ${e.message}")
+        }
+    }
+
+    private fun syncSnapshotToLocal(snapshot: com.google.firebase.database.DataSnapshot) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val authorName = snapshot.child("authorName").getValue(String::class.java) ?: ""
+                val content = snapshot.child("content").getValue(String::class.java) ?: ""
+                val timestamp = snapshot.child("timestamp").getValue(Long::class.java) ?: 0L
+                if (authorName.isBlank() || (content.isBlank() && snapshot.child("imageUrl").getValue(String::class.java).isNullOrBlank())) return@launch
+                
+                // Get all local feed posts
+                val currentPosts = repository.feedPosts.first()
+                val exists = currentPosts.any { 
+                    it.authorName == authorName && it.content == content && Math.abs(it.timestamp - timestamp) < 5000 
+                }
+                
+                if (!exists) {
+                    val authorId = snapshot.child("authorId").getValue(Int::class.java) ?: 999
+                    val authorAvatar = snapshot.child("authorAvatar").getValue(String::class.java) ?: "avatar_user_main"
+                    val imageUrl = snapshot.child("imageUrl").getValue(String::class.java) ?: ""
+                    val gradientIndex = snapshot.child("gradientIndex").getValue(Int::class.java) ?: -1
+                    val likeCount = snapshot.child("likeCount").getValue(Int::class.java) ?: 0
+                    val commentCount = snapshot.child("commentCount").getValue(Int::class.java) ?: 0
+                    val shareCount = snapshot.child("shareCount").getValue(Int::class.java) ?: 0
+                    val isAiLabeled = snapshot.child("isAiLabeled").getValue(Boolean::class.java) ?: false
+                    val privacy = snapshot.child("privacy").getValue(String::class.java) ?: "Public"
+                    
+                    val syncedPost = PostEntity(
+                        postId = 0, // Auto-generate
+                        authorId = authorId,
+                        authorName = authorName,
+                        authorAvatar = authorAvatar,
+                        content = content,
+                        imageUrl = imageUrl,
+                        gradientIndex = gradientIndex,
+                        timestamp = timestamp,
+                        likeCount = likeCount,
+                        commentCount = commentCount,
+                        shareCount = shareCount,
+                        isLikedByUser = false,
+                        isAiLabeled = isAiLabeled,
+                        privacy = privacy
+                    )
+                    repository.addPost(syncedPost)
+                    android.util.Log.d("FirebaseSync", "Synced remote post from: $authorName")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FirebaseSync", "Error syncing Firebase snapshot: ${e.message}")
+            }
+        }
+    }
+
+    fun syncPostToFirebase(post: PostEntity) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val database = com.google.firebase.database.FirebaseDatabase.getInstance("https://aura-6637b-default-rtdb.firebaseio.com")
+                val postsRef = database.getReference("posts")
+                
+                val map = hashMapOf<String, Any>(
+                    "authorId" to post.authorId,
+                    "authorName" to post.authorName,
+                    "authorAvatar" to post.authorAvatar,
+                    "content" to post.content,
+                    "imageUrl" to post.imageUrl,
+                    "gradientIndex" to post.gradientIndex,
+                    "timestamp" to post.timestamp,
+                    "likeCount" to post.likeCount,
+                    "commentCount" to post.commentCount,
+                    "shareCount" to post.shareCount,
+                    "isAiLabeled" to post.isAiLabeled,
+                    "privacy" to post.privacy
+                )
+                postsRef.push().setValue(map)
+                    .addOnSuccessListener {
+                        android.util.Log.d("FirebaseSync", "Successfully synced newly created post to Firebase Realtime Database.")
+                    }
+                    .addOnFailureListener { e ->
+                        android.util.Log.e("FirebaseSync", "Failed to push to Firebase: ${e.message}")
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("FirebaseSync", "Exception pushing post: ${e.message}")
+            }
         }
     }
 }
