@@ -53,11 +53,6 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      isDebuggable = true
-      isMinifyEnabled = false
-      isShrinkResources = false
-      signingConfig = signingConfigs.getByName("debugConfig")
-    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
