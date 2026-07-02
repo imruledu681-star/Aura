@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "204864978168",
+    "firebase_url": "https://aura-6637b-default-rtdb.firebaseio.com",
+    "project_id": "aura-6637b",
+    "storage_bucket": "aura-6637b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204864978168:android:7a87423f7f414bdc334f0d",
+        "android_client_info": {
+          "package_name": "com.imrul.aura"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAncT1128TPP7pFRNvdxXQlxHEqQgTcSWM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

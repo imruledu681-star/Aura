@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aura &bull; Web Preview</title>
+    
+    <!-- Google Fonts for premium Bengali & English typography pairing -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for beautiful Material icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Fallback Open Graph Preview Tags (WhatsApp, Facebook, Discord) -->
+    <meta property="og:title" content="Aura Shared Post ✨" />
+    <meta property="og:description" content="অরা অ্যাপ্লিকেশনে শেয়ার করা চমৎকার পোস্টটি দেখুন এবং ইনস্টলার ডাউনলোড করে যুক্ত হন।" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&h=630&q=80" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="aura social app" />
+    <meta name="twitter:card" content="summary_large_image">
+
+    <style>
+        :root {
+            --primary: #7C4DFF; /* Bold Lavender */
+            --primary-light: #F1EDFF;
+            --primary-dark: #6200EA;
+            --accent: #FEB729;
+            --discord: #5865F2;
+            --discord-dark: #4752C4;
+            --bg-page: #FFFFFF; /* Default Bold White background */
+            --bg-accent: #FAF9FF;
+            --card-bg: #FFFFFF;
+            --text-main: #1C1929;
+            --text-sub: #5E5A74;
+            --border-color: #ECEAF4;
+            --shadow: 0 10px 30px rgba(124, 77, 255, 0.05);
+            --shadow-hover: 0 15px 40px rgba(124, 77, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Ambient glowing highlights in background */
+        .ambient-glow-1 {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: rgba(124, 77, 255, 0.06);
+            filter: blur(120px);
+            border-radius: 50%;
+            top: -100px;
+            left: -150px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: rgba(254, 183, 41, 0.04);
+            filter: blur(120px);
+            border-radius: 50%;
+            bottom: 100px;
+            right: -150px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Full container layout */
+        .wrapper {
+            width: 100%;
+            max-width: 650px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Beautiful top header block */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 8px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .brand-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-badge {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-badge:hover {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+
+        /* Custom Prominent Discord Authentication Buttons (Just like Aura Join screen logic) */
+        .aura-join-action-box {
+            background: linear-gradient(135deg, #F8F7FF 0%, #FAF9FF 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .join-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .join-title i {
+            color: var(--primary);
+        }
+
+        .discord-auth-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .auth-discord-btn {
+            flex: 1;
+            padding: 12px 14px;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 700;
+            border-radius: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .auth-discord-btn.register {
+            background-color: var(--discord);
+            color: #FFFFFF;
+            border: none;
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.25);
+        }
+
+        .auth-discord-btn.register:hover {
+            background-color: var(--discord-dark);
+            transform: translateY(-2.5px);
+            box-shadow: 0 6px 16px rgba(88, 101, 242, 0.35);
+        }
+
+        .auth-discord-btn.signin {
+            background-color: transparent;
+            color: var(--discord);
+            border: 2px solid var(--discord);
+        }
+
+        .auth-discord-btn.signin:hover {
+            background-color: rgba(88, 101, 242, 0.05);
+            transform: translateY(-2.5px);
+        }
+
+        /* The central interactive social Post Card */
+        .post-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .post-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Post Card Header */
+        .post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .author-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FAF8FF 0%, #ECE7FF 100%);
+            border: 2px solid var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .author-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .author-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .author-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .verified-badge {
+            color: var(--primary);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .post-time-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .post-privacy-icon {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .card-menu {
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+            font-size: 15px;
+        }
+
+        .card-menu:hover {
+            background: #F4F2F9;
+            color: var(--primary);
+        }
+
+        /* Post Body Content */
+        .post-body {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-main);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-weight: 400;
+        }
+
+        /* Post Image Section */
+        .post-image-container {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            position: relative;
+            background-color: #F8F7FF;
+            display: none; /* Auto shown if image parameter exists */
+        }
+
+        .post-img {
+            width: 100%;
+            max-height: 480px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .post-img:hover {
+            transform: scale(1.01);
+        }
+
+        /* Reactions Count Summary Row */
+        .counts-summary {
+            padding: 10px 4px 6px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .reaction-bubbles {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bubble-icons {
+            display: flex;
+            align-items: center;
+        }
+
+        .b-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #FFFFFF;
+            border: 1.5px solid #FFFFFF;
+            margin-right: -5px;
+            box-shadow: 0 1.5px 3px rgba(0,0,0,0.1);
+        }
+
+        .b-icon.like { background: #1877F2; }
+        .b-icon.love { background: #FF1A53; }
+        .b-icon.aura { background: var(--primary); }
+
+        .reaction-text {
+            font-weight: 500;
+            color: var(--text-sub);
+            padding-left: 2px;
+        }
+
+        .comment-share-summary {
+            font-weight: 500;
+        }
+
+        /* Live Feedback Interactive Panel (Like, Comment, Share) */
+        .interactions-panel {
+            display: flex;
+            gap: 4px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Floating long press reactions palette simulator */
+        .reactions-drawer {
+            position: absolute;
+            bottom: 48px;
+            left: 10px;
+            background: #FFFFFF;
+            padding: 6px 12px;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 10px;
+            transform: translateY(10px) scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            z-index: 10;
+            border: 1px solid var(--border-color);
+        }
+
+        .interactions-panel:hover .reactions-drawer,
+        .reactions-drawer:hover {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer-emoji {
+            font-size: 22px;
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .drawer-emoji:hover {
+            transform: scale(1.3) translateY(-4px);
+        }
+
+        /* Live Comments Section */
+        .comments-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding-top: 6px;
+        }
+
+        .comments-header {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .comments-filter {
+            color: var(--text-sub);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .comment-node {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            animation: slideInDown 0.35s ease;
+        }
+
+        .comm-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #FAF8FF 100%);
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1.5px solid var(--primary-light);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .comm-bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+        }
+
+        .comm-bubble {
+            background: linear-gradient(to bottom, #FAF9FF, var(--primary-light));
+            border-radius: 18px;
+            padding: 10px 14px;
+            display: inline-block;
+            max-width: 90%;
+        }
+
+        .comm-author {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .comm-author-badge {
+            font-size: 11px;
+            color: var(--primary);
+        }
+
+        .comm-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-main);
+            word-wrap: break-word;
+        }
+
+        .comm-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 11px;
+            color: var(--text-sub);
+            padding-left: 8px;
+            font-weight: 600;
+        }
+
+        .comm-act-btn {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+
+        .comm-act-btn:hover {
+            color: var(--primary);
+        }
+
+        .comm-liked {
+            color: var(--primary);
+        }
+
+        /* Comment Input Field block */
+        .comment-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding-top: 8px;
+        }
+
+        .comment-textbox {
+            flex-grow: 1;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .comment-textbox:focus {
+            background: #FFFFFF;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(124, 77, 255, 0.1);
+        }
+
+        .comment-send-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(124, 77, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .comment-send-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        /* Launcher/Open directly block */
+        .launcher-box {
+            background: rgba(124, 77, 255, 0.04);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(124, 77, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .launcher-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .launcher-title i {
+            color: var(--primary);
+        }
+
+        .btn-action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 14px rgba(124, 77, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(124, 77, 255, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary) !important;
+            border: 2px solid var(--primary-light);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Modern Download Suite */
+        .downloads-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .download-option {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow);
+        }
+
+        .download-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .download-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .dl-icon-container {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #FFFFFF;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .dl-icon-container.apk { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+        .dl-icon-container.zip { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+        .dl-icon-container.fallback { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
+
+        .dl-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .dl-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .dl-tagline {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .dl-tag {
+            background: #E8F5E9;
+            color: #2E7D32;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            align-self: flex-start;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .dl-indicator {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-accent);
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .download-option:hover .dl-indicator {
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: rotate(360deg);
+        }
+
+        /* Popups, Modals, Toasts */
+        .toast-banner {
+            position: fixed;
+            bottom: 24px;
+            background: rgba(28, 25, 41, 0.95);
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .toast-banner.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Beautiful Discord Auth Simulated Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 10, 24, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .discord-auth-modal {
+            background: #2F3136;
+            width: 90%;
+            max-width: 420px;
+            border-radius: 16px;
+            overflow: hidden;
+            color: #FFFFFF;
+            font-family: sans-serif; /* Discord classic font standard */
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.show .discord-auth-modal {
+            transform: scale(1);
+        }
+
+        .da-header {
+            background: #202225;
+            padding: 24px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            position: relative;
+        }
+
+        .da-header-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            color: #72767D;
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.15s ease;
+        }
+
+        .da-header-close:hover {
+            color: #DCDDDE;
+        }
+
+        .da-app-logos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .da-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .da-logo.aura-l {
+            background: var(--primary);
+            color: #FFF;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(124, 77, 255, 0.3);
+        }
+
+        .da-logo.discord-l {
+            background: #5865F2;
+            color: #FFF;
+            font-size: 24px;
+        }
+
+        .da-connection-line {
+            width: 40px;
+            height: 1.5px;
+            background: rgba(255, 255, 255, 0.12);
+            position: relative;
+        }
+
+        .da-connection-line::before {
+            content: '🔗';
+            position: absolute;
+            top: -10px;
+            left: 12px;
+            font-size: 10px;
+        }
+
+        .da-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 6px;
+        }
+
+        .da-subtitle {
+            font-size: 12px;
+            color: #B9BBBE;
+        }
+
+        .da-body {
+            padding: 24px;
+        }
+
+        .da-permissions {
+            background: #292B2F;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+
+        .da-perm-title {
+            color: #B9BBBE;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .da-perm-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            color: #DCDDDE;
+        }
+
+        .da-perm-item:last-child { margin-bottom: 0; }
+
+        .da-perm-item i {
+            color: #43B581;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .da-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .da-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #B9BBBE;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .da-select {
+            background: #202225;
+            border: 1px solid rgba(0,0,0,0.3);
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: #DCDDDE;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .da-footer {
+            background: #2F3136;
+            padding: 0 24px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .da-btn {
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .da-btn-cancel {
+            background: transparent;
+            color: #FFFFFF;
+        }
+
+        .da-btn-cancel:hover {
+            text-decoration: underline;
+        }
+
+        .da-btn-auth {
+            background: #5865F2;
+            color: #FFFFFF;
+        }
+
+        .da-btn-auth:hover {
+            background: #4752C4;
+        }
+
+        /* Native session redirector modal overlay */
+        .redirect-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 10, 24, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            color: #FFFFFF;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .redirect-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .redirect-box {
+            text-align: center;
+            max-width: 320px;
+            padding: 40px 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .spinner-ring {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(124, 77, 255, 0.15);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .redirect-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #FFFFFF;
+        }
+
+        .redirect-desc {
+            font-size: 13px;
+            color: #A9A4CA;
+            line-height: 1.5;
+        }
+
+        /* Extra Information / Guide card */
+        .guide-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .guide-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-title i {
+            color: var(--primary);
+        }
+
+        .guide-tabs {
+            display: flex;
+            background: var(--bg-accent);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 700;
+            font-size: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: #FFFFFF;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(124, 77, 255, 0.08);
+        }
+
+        .guide-body {
+            display: none;
+        }
+
+        .guide-body.active {
+            display: block;
+        }
+
+        .guide-steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-li {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-main);
+        }
+
+        .step-bullet {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .step-text strong {
+            color: var(--primary-dark);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 24px;
+            padding: 24px 20px 40px;
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .disclaimer-hub {
+            font-size: 11px;
+            line-height: 1.4;
+            background-color: var(--bg-accent);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Custom Keyframe Animations */
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .wrapper { padding: 12px 10px; }
+            .btn { padding: 10px 18px; font-size: 13px; }
+            .post-card { padding: 16px; border-radius: 20px; }
+            .author-avatar { width: 42px; height: 42px; font-size: 18px; }
+            .author-name { font-size: 15px; }
+            .post-body { font-size: 14.5px; }
+            .action-btn { font-size: 13px; padding: 8px 4px; }
+            .comm-bubble { padding: 8px 12px; }
+            .discord-auth-row { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Backdrop Decorative elements -->
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <!-- Active Redirection Screen Overlay -->
+    <div id="redirectOverlay" class="redirect-overlay">
+        <div class="redirect-box">
+            <div class="spinner-ring"></div>
+            <h3 class="redirect-title">aura লোড হচ্ছে...</h3>
+            <p id="redirectOverlayDesc" class="redirect-desc">aura সেশন শুরু করা হচ্ছে। যদি aura এপ্লিকেশন ইন্সটল থাকে, তবে সরাসরি ওপেন বা সুইচ করবে।</p>
+            <button class="btn btn-outline" onclick="dismissRedirectOverlay()" style="padding: 8px 18px; font-size: 12px; color: white !important; border-color: rgba(255,255,255,0.4);">
+                ব্রাউজারে দেখুন / Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Simulated Discord handshake Modal -->
+    <div id="discordAuthOverlay" class="modal-overlay" onclick="closeDiscordModal(event)">
+        <div class="discord-auth-modal" onclick="event.stopPropagation()">
+            <div class="da-header">
+                <i class="fa-solid fa-xmark da-header-close" onclick="closeDiscordModal(null)"></i>
+                <div class="da-app-logos">
+                    <div class="da-logo aura-l"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="da-connection-line"></div>
+                    <div class="da-logo discord-l"><i class="fa-brands fa-discord"></i></div>
+                </div>
+                <h3 id="discordModalTitle" class="da-title">Authorize Access</h3>
+                <p id="discordModalSub" class="da-subtitle">aura requested access to your Discord account information.</p>
+            </div>
+            <div class="da-body">
+                <div class="da-permissions">
+                    <h5 class="da-perm-title">This will allow aura to:</h5>
+                    <div class="da-perm-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Read your username, discriminator, and public display avatar.</span>
+                    </div>
+                    <div class="da-perm-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Verify your email address securely with device registries.</span>
+                    </div>
+                </div>
+                <div class="da-form-group">
+                    <label class="da-label">Choose Verified Discord Identity:</label>
+                    <select id="discordIdentitySelect" class="da-select">
+                        <option value="imruledu681@gmail.com|IMRUL HASAN">IMRUL HASAN (imruledu681@gmail.com)</option>
+                        <option value="sajib@gmail.com|Sajib Ahmed">Sajib Ahmed (sajib@gmail.com)</option>
+                        <option value="sarah@example.com|Sarah Jennifer">Sarah Jennifer (sarah@example.com)</option>
+                        <option value="bappy@example.com|Bappy Rahman">Bappy Rahman (bappy@example.com)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="da-footer">
+                <button class="da-btn da-btn-cancel" onclick="closeDiscordModal(null)">Cancel</button>
+                <button class="da-btn da-btn-auth" onclick="completeDiscordAuth()">Authorize & Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="wrapper">
+        
+        <!-- App Top Header bar -->
+        <header>
+            <a href="#" class="brand">
+                <div class="brand-logo"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <span class="brand-name">aura</span>
+            </a>
+            <div class="header-actions">
+                <button class="btn-badge" onclick="triggerNativeDeepLink()">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in aura
+                </button>
+            </div>
+        </header>
+
+        <!-- Discord prominent Sign Up & Sign In Buttons section (Same logic to Aura Join Aura page) -->
+        <div class="aura-join-action-box">
+            <div class="join-title">
+                <i class="fa-brands fa-discord"></i>
+                <span>Aura Discord Security Verification Gateway</span>
+            </div>
+            <div class="discord-auth-row">
+                <button class="auth-discord-btn register" onclick="openDiscordModal('signup')">
+                    <i class="fa-brands fa-discord"></i> Sign up with Discord
+                </button>
+                <button class="auth-discord-btn signin" onclick="openDiscordModal('signin')">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign in with Discord
+                </button>
+            </div>
+        </div>
+
+        <!-- Main post card wrapper -->
+        <div id="mainPostCard" class="post-card">
+            <!-- Header section of the post -->
+            <div class="post-header">
+                <div class="author-section">
+                    <div id="postAuthorAvatar" class="author-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="author-meta">
+                        <div class="author-name-row">
+                            <span id="postAuthorName" class="author-name">Aura Member</span>
+                            <span class="verified-badge"><i class="fa-solid fa-circle-check"></i></span>
+                        </div>
+                        <div class="post-time-row">
+                            <span id="postTime">9h ago (৯ ঘণ্টা আগে)</span>
+                            <span class="bullet">&bull;</span>
+                            <i class="fa-solid fa-earth-americas post-privacy-icon" title="Public Post"></i>
+                        </div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-ellipsis card-menu" onclick="showToast('অপশন মেনু অবরুদ্ধ আছে')"></i>
+            </div>
+
+            <!-- Body text section -->
+            <div id="postContentBody" class="post-body">অরা গ্রুপ থেকে চমৎকার একটি নতুন সামারি পোস্ট লোড হচ্ছে... অনুগ্রহপূর্বক অপেক্ষা করুন।</div>
+
+            <!-- Optional Image container section -->
+            <div id="postImageWrapper" class="post-image-container">
+                <img id="postImageItem" src="" alt="Aura Attachment" class="post-img">
+            </div>
+
+            <!-- Count indicator summary raw -->
+            <div class="counts-summary">
+                <div class="reaction-bubbles">
+                    <div class="bubble-icons">
+                        <span class="b-icon like"><i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="b-icon aura"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    </div>
+                    <span id="likeCountText" class="reaction-text">145 Likes & Auras</span>
+                </div>
+                <div class="comment-share-summary">
+                    <span id="commentCountText">12 Comments</span>
+                    &bull;
+                    <span id="shareCountText">34 Shares</span>
+                </div>
+            </div>
+
+            <!-- Interactions Feedback Actions Panel with floating long-press drawer emulator -->
+            <div class="interactions-panel">
+                <button class="action-btn like-btn-wrap" onclick="toggleMainLike()">
+                    <i id="likeActionIcon" class="fa-regular fa-thumbs-up"></i>
+                    <span id="likeActionLabel">লাইক</span>
+                </button>
+                <div class="reactions-drawer">
+                    <span class="drawer-emoji" onclick="selectReaction('👍', 'like')">👍</span>
+                    <span class="drawer-emoji" onclick="selectReaction('❤️', 'love')">❤️</span>
+                    <span class="drawer-emoji" onclick="selectReaction('💜', 'aura')">💜</span>
+                    <span class="drawer-emoji" onclick="selectReaction('😂', 'haha')">😂</span>
+                    <span class="drawer-emoji" onclick="selectReaction('😮', 'wow')">😮</span>
+                    <span class="drawer-emoji" onclick="selectReaction('🔥', 'fire')">🔥</span>
+                </div>
+
+                <button class="action-btn" onclick="focusCommentInput()">
+                    <i class="fa-regular fa-message"></i>
+                    <span>কমেন্ট</span>
+                </button>
+                <button class="action-btn" onclick="triggerWebSharingFlow()">
+                    <i class="fa-solid fa-share"></i>
+                    <span>শেয়ার</span>
+                </button>
+            </div>
+
+            <!-- Deep Link Quick Launcher Bar inside Card (Dynamic) -->
+            <div class="launcher-box" style="margin-top: 4px;">
+                <div class="launcher-title">
+                    <i class="fa-solid fa-rocket"></i>
+                    <strong style="color: var(--primary);">সরাসরি aura অ্যাপে ওপেন করুন</strong>
+                </div>
+                <div class="btn-action-row">
+                    <button class="btn btn-primary" onclick="triggerNativeDeepLink()" style="flex: 1; padding: 10px 16px;">
+                        <i class="fa-solid fa-play"></i> Launch App
+                    </button>
+                    <button class="btn btn-outline" onclick="scrollToInstallSection()" style="flex: 1; padding: 10px 16px; border-color: var(--primary); color: var(--primary) !important;">
+                        <i class="fa-solid fa-download"></i> Download APK
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live Rich Comments section -->
+            <div class="comments-section">
+                <div class="comments-header">
+                    <span>সবচেয়ে প্রাসঙ্গিক মন্তব্যসমূহ (Most Relevant Comments)</span>
+                    <span class="comments-filter">সব দেখুন <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i></span>
+                </div>
+                <div id="commentListContainer" class="comment-list">
+                    <!-- Javascript will populate simulated comments and live custom comments here -->
+                </div>
+
+                <!-- Input area to write live comment -->
+                <div class="comment-input-area">
+                    <div id="typingAvatar" class="comm-avatar">G</div>
+                    <input type="text" id="commentTextInput" class="comment-textbox" placeholder="aura অ্যাপে একটি পাবলিক মন্তব্য লিখুন..." onkeydown="handleCommentInputKey(event)">
+                    <button class="comment-send-btn" onclick="submitAuraComment()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Installer & File Downloads (Aura App Downloads segment) -->
+        <div id="installSection" class="guide-card" style="border-color: #E8F5E9; background: #FAFFFA;">
+            <div class="guide-title" style="color: #2E7D32;">
+                <i class="fa-solid fa-circle-down" style="color: #2E7D32;"></i>
+                <strong>aura অ্যাপ্লিকেশন ডাউনলোড করুন (Aura App Downloads)</strong>
+            </div>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 16px; line-height: 1.5;">
+                aura অ্যাপটি ইনস্টল করে আপনার বন্ধুদের সাথে অবিরাম যোগাযোগ শুরু করুন। নিচে থাকা যেকোনো বিকল্প পদ্ধতিতে সরাসরি ইনস্টলার ফাইল ডাউনলোড করে নিতে পারেন:
+            </p>
+
+            <div class="downloads-container">
+                <!-- Option 1: Direct APK -->
+                <a href="./.build-outputs/app-debug.apk" class="download-option" download="app-debug.apk">
+                    <div class="download-left">
+                        <div class="dl-icon-container apk"><i class="fa-brands fa-android"></i></div>
+                        <div class="dl-info">
+                            <span class="dl-title">ডিরেক্ট APK ইনস্টলার (app-debug.apk)</span>
+                            <span class="dl-tagline">Direct Installer File. সবচেয়ে ফাস্ট ও ঝামেলাহীন উপায়।</span>
+                            <span class="dl-tag">সুপারিশকৃত / RECOMMENDED</span>
+                        </div>
+                    </div>
+                    <div class="dl-indicator"><i class="fa-solid fa-download"></i></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Setup instructions guide block -->
+        <div class="guide-card">
+            <h4 class="guide-title">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>সফলভাবে কিভাবে ইনস্টল ও ব্যবহার করবেন?</span>
+            </h4>
+            <div class="guide-tabs">
+                <button id="tabBn" class="tab-btn active" onclick="switchGuide('bn')">বাংলা গাইড (Bangla)</button>
+                <button id="tabEn" class="tab-btn" onclick="switchGuide('en')">English Instruction</button>
+            </div>
+
+            <!-- Bangla Pane -->
+            <div id="guideBn" class="guide-body active">
+                <ol class="guide-steps">
+                    <li class="step-li">
+                        <div class="step-bullet">১</div>
+                        <div class="step-text">উপরে থাকা সবুজ বক্সে <strong>"ডিরেক্ট APK ইনস্টলার"</strong> অপশনটিতে ক্লিক করুন এবং ফাইলটি সফলভাবে ডাউনলোড ফোল্ডারে সেভ করুন।</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">২</div>
+                        <div class="step-text">ডাউনলোড হয়ে গেলে ফাইলে ট্যাপ করুন। ব্রাউজার বা সিস্টেম সিকিউরিটি "Unknown install block" দেখালে সেটিংস থেকে <strong>"Allow from this source"</strong> চালু করুন।</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">৩</div>
+                        <div class="step-text">যদি আপনার ফোন ডিরেক্ট APK নামাতে বাধা দেয়, তবে ২য় অপশন <strong>ZIP রিডার ড্রাইভ</strong> নামিয়ে ফোনে আনজিপ বা এক্সট্রাক্ট করে ইন্সটল করুন।</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">৪</div>
+                        <div class="step-text">ইনস্টল সম্পন্ন হলে aura অ্যাপটি চালু করুন ও গেস্ট বা ডিসকর্ড দিয়ে ভেরিফাই সম্পন্ন করে দুর্দান্ত ফিড ইন্টারঅ্যাকশন উপভোগ করুন! 🎉</div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- English Pane -->
+            <div id="guideEn" class="guide-body">
+                <ol class="guide-steps">
+                    <li class="step-li">
+                        <div class="step-bullet">1</div>
+                        <div class="step-text">Tap on the emerald-green <strong>"Direct APK Installer"</strong> option card to save the apk setup onto your local drive.</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">2</div>
+                        <div class="step-text">Once downloaded, click on the package notification block. Grant standard application installer privileges by flipping <strong>"Allow install from unknown sources"</strong>.</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">3</div>
+                        <div class="step-text">If direct system blocks persist, download the secure uncompressed <strong>ZIP container</strong>, extract it locally, and run the inner setup.</div>
+                    </li>
+                    <li class="step-li">
+                        <div class="step-bullet">4</div>
+                        <div class="step-text">Open aura, register or authenticate using your Discord credentials to unlock real-time feed updates instantly!</div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Float Notification Banner -->
+        <div id="toastBanner" class="toast-banner">
+            <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i>
+            <span id="toastMessage">নকল শেয়ার কপি করা হয়েছে!</span>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="disclaimer-hub">
+                💡 <strong>Dynamic Redirect Activated:</strong> This premium link hub supports high-contrast server fallback rendering and Zero-Database dynamic content parameters natively via location-queries in real-time.
+            </div>
+            <div>aura Client Redirection Hub v1.6 &bull; 2026 Social Suite</div>
+        </footer>
+
+    </div>
+
+    <!-- Core Dynamic client-side routing & Interaction scripts -->
+    <script>
+        // Bulletproof utf-8 base64 decoding utilities
+        function decodeBase64Safe(str) {
+            if (!str) return '';
+            try {
+                let clean = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (clean.length % 4 !== 0) {
+                    clean += '=';
+                }
+                return decodeURIComponent(atob(clean).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (e) {
+                try {
+                    return atob(str);
+                } catch(err) {
+                    return str; // Fallback
+                }
+            }
+        }
+
+        // Global States
+        let currentPostId = null;
+        let isMainPostLiked = false;
+        let simulatedLikesCount = 14210;
+        let simulatedShareCount = 384;
+        let simulatedCommentsCount = 12;
+
+        // User profile state
+        let userProfile = {
+            name: "অরা গেস্ট",
+            email: "guest@aura.com",
+            avatarChar: "G"
+        };
+
+        // Static Simulated Initial Comments list (Based on 1st Photo FB comments layout!)
+        let commentsList = [
+            {
+                name: "Sajib Ahmed",
+                badge: "ভেরিফাইড মেম্বার 💜",
+                time: "9 hours ago",
+                text: "অসাধারণ ডিজাইন! অরা অ্যাপটি দিয়ে বন্ধুদের সাথে কানেক্ট থেকে অন্যরকম ফিলিংস পাচ্ছি। ইনস্টলার ফাইলটা সবাই নামিয়ে ট্রাই করে দেখতে পারেন! ✨🚀",
+                likes: 124,
+                likedByMe: false,
+                avatarChar: "S"
+            },
+            {
+                name: "Sarah Jennifer",
+                badge: "",
+                time: "8 hours ago",
+                text: "The zero-latency sync performance is outstanding. Best social networking suite of 2026! 😍",
+                likes: 54,
+                likedByMe: false,
+                avatarChar: "S"
+            },
+            {
+                name: "Mizanur Rahman",
+                badge: "",
+                time: "5 hours ago",
+                text: "এটার UI টা আসলেই অসাধারণ লাগছে ভাই। বিশেষ করে বোল্ড ল্যাভেন্ডার থিমটা পুরো ক্লাসি লুক দেয়! আইকনগুলোও মারাত্মক সুন্দর। 🔥🎨",
+                likes: 19,
+                likedByMe: false,
+                avatarChar: "M"
+            }
+        ];
+
+        // Parse query parameters and populate views
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            currentPostId = params.get('postId') || params.get('postld'); // Support both postId and typo postld spelling from messenger/WhatsApp URLs
+
+            if (currentPostId) {
+                // Parse Dynamic base64 post contents
+                const nameB64 = params.get('n') || '';
+                const titleB64 = params.get('t') || '';
+                const descB64 = params.get('d') || '';
+                const imageB64 = params.get('i') || '';
+
+                const decodedName = decodeBase64Safe(nameB64) || 'অরা মেম্বার (aura Member)';
+                const decodedText = decodeBase64Safe(descB64) || 'অরা অ্যাপ্লিকেশনে শেয়ার করা চমৎকার নতুন কন্টেন্টটি দেখুন!';
+                const decodedImageUrl = decodeBase64Safe(imageB64);
+
+                // Update Post card DOM elements
+                document.getElementById('postAuthorName').innerText = decodedName;
+                document.getElementById('postContentBody').innerText = decodedText;
+
+                // Avatar letter setting
+                const firstChar = decodedName.trim().charAt(0).toUpperCase() || 'A';
+                const avatarBox = document.getElementById('postAuthorAvatar');
+                avatarBox.innerText = firstChar;
+                avatarBox.style.background = 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)';
+                avatarBox.style.color = '#FFFFFF';
+
+                // Set post attachment image
+                if (decodedImageUrl) {
+                    const images = decodedImageUrl.split(',').map(x => x.trim()).filter(x => x.startsWith('http'));
+                    const wrapper = document.getElementById('postImageWrapper');
+                    wrapper.innerHTML = ''; // clear initial img element
+                    if (images.length > 0) {
+                        wrapper.style.display = 'grid';
+                        if (images.length === 1) {
+                            wrapper.style.gridTemplateColumns = '1fr';
+                        } else if (images.length === 2) {
+                            wrapper.style.gridTemplateColumns = '1fr 1fr';
+                            wrapper.style.gap = '8px';
+                        } else {
+                            wrapper.style.gridTemplateColumns = '1fr 1fr';
+                            wrapper.style.gap = '8px';
+                        }
+                        images.forEach(imgUrl => {
+                            const img = document.createElement('img');
+                            img.src = imgUrl;
+                            img.alt = 'Aura Attachment';
+                            img.className = 'post-img';
+                            img.style.width = '100%';
+                            img.style.height = '240px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '12px';
+                            wrapper.appendChild(img);
+                        });
+                    } else {
+                        wrapper.style.display = 'none';
+                    }
+                }
+
+                // Apply randomized but realistic stat indices based on postId to simulate real social values
+                const idSeed = parseInt(currentPostId) || 45;
+                simulatedLikesCount = Math.floor(idSeed * 17.5) + 382;
+                simulatedShareCount = Math.floor(idSeed * 2.3) + 42;
+                simulatedCommentsCount = commentsList.length;
+
+                updateStatsRow();
+
+                // Trigger automatic Native Deep link open attempt with redirection overlay
+                document.getElementById('redirectOverlay').classList.add('show');
+                triggerNativeDeepLink();
+
+                // Dismiss redirect helper screen automatically after 3.2 seconds
+                setTimeout(() => {
+                    dismissRedirectOverlay();
+                }, 3200);
+
+            } else {
+                // Fallback Curated View to prevent "not found / broken UI / 404"
+                dismissRedirectOverlay();
+                loadFallbackCuratedPost();
+            }
+
+            // Sync user avatar
+            updateTypingAvatar();
+
+            // Render comments list
+            renderCommentsList();
+        });
+
+        // Curated beautiful fallback post when query params are absent
+        function loadFallbackCuratedPost() {
+            document.getElementById('postAuthorName').innerText = "Jamuna Television";
+            document.getElementById('postAuthorAvatar').innerText = "J";
+            document.getElementById('postAuthorAvatar').style.background = "linear-gradient(135deg, #FF1F4B 0%, #D80F35 100%)";
+            document.getElementById('postAuthorAvatar').style.color = "white";
+            document.getElementById('postContentBody').innerText = "পুলিশ বলেছে ‘তুই আসামি, চুপ, একটা কথাও বলবি না’। যখন আমার গলা চেপে ধরে, আমি চিৎকার করে আব্বুকে কল দিচ্ছি তখন মোবাইল নিয়ে নিলো। প্রায় ১০০ মানুষ জড়ো হয়ে আমার ক্রিকেটার পরিচয় দিলেও আমাকে লাঠি দিয়ে মেরেছে। আমার গলা চেপে ধরে থানায় নিয়ে আসে।\n\n— নাঈম হাসান (জাতীয় ক্রিকেটার)";
+            
+            const imgEl = document.getElementById('postImageItem');
+            imgEl.src = "https://images.unsplash.com/photo-1540747737956-378724044402?auto=format&fit=crop&w=1200&q=80";
+            document.getElementById('postImageWrapper').style.display = 'block';
+
+            simulatedLikesCount = 129420;
+            simulatedShareCount = 3314;
+            simulatedCommentsCount = 5410;
+
+            updateStatsRow();
+        }
+
+        // Update stats summary details
+        function updateStatsRow() {
+            document.getElementById('likeCountText').innerText = formatStatNumber(simulatedLikesCount) + " Likes & Auras";
+            document.getElementById('commentCountText').innerText = formatStatNumber(simulatedCommentsCount) + " Comments";
+            document.getElementById('shareCountText').innerText = formatStatNumber(simulatedShareCount) + " Shares";
+        }
+
+        function formatStatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num;
+        }
+
+        // Native Launcher Deep Link Core implementation (ZERO LAG HANDSHAKE)
+        function triggerNativeDeepLink() {
+            // Send search query parameters verbatim to native intent filters
+            const searchQueries = window.location.search || '';
+            const testDeepLink = `aura://post${searchQueries}`;
+            
+            // Try Custom URL scheme trigger
+            window.location.href = testDeepLink;
+
+            // Fallback alternative scheme attempt
+            setTimeout(() => {
+                window.location.href = `aura://post/${searchQueries}`;
+            }, 600);
+        }
+
+        // Dismiss Native launcher screen overlay
+        function dismissRedirectOverlay() {
+            document.getElementById('redirectOverlay').classList.remove('show');
+        }
+
+        // Interaction Like Toggle
+        function toggleMainLike() {
+            isMainPostLiked = !isMainPostLiked;
+            const icon = document.getElementById('likeActionIcon');
+            const label = document.getElementById('likeActionLabel');
+            
+            if (isMainPostLiked) {
+                icon.className = "fa-solid fa-thumbs-up";
+                label.innerText = "পছন্দ করেছেন";
+                label.style.color = "var(--primary)";
+                icon.style.color = "var(--primary)";
+                simulatedLikesCount += 1;
+                showToast("আপনি এই পোস্টটি পছন্দ করেছেন 💜");
+            } else {
+                icon.className = "fa-regular fa-thumbs-up";
+                label.innerText = "লাইক";
+                label.style.color = "";
+                icon.style.color = "";
+                simulatedLikesCount -= 1;
+            }
+            updateStatsRow();
+        }
+
+        // Hover emoji reactions selector
+        function selectReaction(symbol, type) {
+            isMainPostLiked = true;
+            const icon = document.getElementById('likeActionIcon');
+            const label = document.getElementById('likeActionLabel');
+
+            if (type === 'like') {
+                icon.className = "fa-solid fa-thumbs-up";
+                label.innerText = "👍 Likes";
+                icon.style.color = "#1877F2";
+                label.style.color = "#1877F2";
+            } else if (type === 'love') {
+                icon.className = "fa-solid fa-heart";
+                label.innerText = "❤️ Loved";
+                icon.style.color = "#FF1A53";
+                label.style.color = "#FF1A53";
+            } else if (type === 'aura') {
+                icon.className = "fa-solid fa-wand-magic-sparkles";
+                label.innerText = "💜 aura Reacted";
+                icon.style.color = "var(--primary)";
+                label.style.color = "var(--primary)";
+            } else {
+                icon.className = "fa-solid fa-face-smile";
+                label.innerText = symbol + " Reacted";
+                icon.style.color = "var(--accent)";
+                label.style.color = "var(--accent)";
+            }
+            
+            simulatedLikesCount += 1;
+            updateStatsRow();
+            showToast(`${symbol} প্রতিক্রিয়া যুক্ত করা হয়েছে!`);
+        }
+
+        // Render comments loop helper
+        function renderCommentsList() {
+            const container = document.getElementById('commentListContainer');
+            container.innerHTML = '';
+
+            commentsList.forEach((comment, index) => {
+                const commentNode = document.createElement('div');
+                commentNode.className = "comment-node";
+                
+                // Avatar check
+                let avatarHtml = `<div class="comm-avatar">${comment.avatarChar}</div>`;
+                if (comment.avatarUrl) {
+                    avatarHtml = `<div class="comm-avatar" style="background-image: url('${comment.avatarUrl}')"></div>`;
+                }
+
+                commentNode.innerHTML = `
+                    ${avatarHtml}
+                    <div class="comm-bubble-wrapper">
+                        <div class="comm-bubble">
+                            <div class="comm-author">
+                                <span>${comment.name}</span>
+                                ${comment.badge ? `<span class="comm-author-badge" title="Verified ID"><i class="fa-solid fa-circle-check"></i> ${comment.badge}</span>` : ''}
+                            </div>
+                            <div class="comm-text">${escapeHTML(comment.text)}</div>
+                        </div>
+                        <div class="comm-actions">
+                            <span class="comm-act-btn ${comment.likedByMe ? 'comm-liked' : ''}" onclick="toggleCommentLike(${index})">
+                                ${comment.likedByMe ? 'পছন্দ করেছেন' : 'লাইক (Like)'}
+                            </span>
+                            <span>&bull;</span>
+                            <span class="comm-act-btn" onclick="replyComment(${index})">উত্তর দিন (Reply)</span>
+                            <span>&bull;</span>
+                            <span style="color: var(--text-sub); font-weight: normal;">${comment.time}</span>
+                            ${comment.likes > 0 ? `<span>&bull;</span> <span style="font-weight:700; color:var(--primary);"><i class="fa-solid fa-thumbs-up"></i> ${comment.likes}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(commentNode);
+            });
+        }
+
+        // Toggle like indicator on dynamic comments
+        function toggleCommentLike(index) {
+            const comment = commentsList[index];
+            comment.likedByMe = !comment.likedByMe;
+            if (comment.likedByMe) {
+                comment.likes += 1;
+                showToast(`${comment.name}-এর কমেন্ট পছন্দ করেছেন`);
+            } else {
+                comment.likes -= 1;
+            }
+            renderCommentsList();
+        }
+
+        function replyComment(index) {
+            const name = commentsList[index].name;
+            const input = document.getElementById('commentTextInput');
+            input.value = `@${name.replace(/\s+/g, '_')} `;
+            input.focus();
+        }
+
+        // Write live comment form submission
+        function submitAuraComment() {
+            const textbox = document.getElementById('commentTextInput');
+            const commentText = textbox.value.trim();
+            if (!commentText) return;
+
+            // Append Comment Object
+            const newComment = {
+                name: userProfile.name,
+                badge: userProfile.name === "অরা গেস্ট" ? "" : "Discord ভেরিফাইড ⚡",
+                time: "মাত্র এখন (Just now)",
+                text: commentText,
+                likes: 0,
+                likedByMe: false,
+                avatarChar: userProfile.avatarChar
+            };
+
+            commentsList.push(newComment);
+            simulatedCommentsCount = commentsList.length;
+            updateStatsRow();
+            
+            // Re-render
+            renderCommentsList();
+            
+            // Reset input
+            textbox.value = '';
+            showToast("পাবলিক মন্তব্যটি অরায় সফলভাবে যোগ করা হয়েছে! 💜");
+            
+            // Bottom auto scroll
+            setTimeout(() => {
+                const list = document.getElementById('commentListContainer');
+                list.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function handleCommentInputKey(e) {
+            if (e.key === 'Enter') {
+                submitAuraComment();
+            }
+        }
+
+        function focusCommentInput() {
+            document.getElementById('commentTextInput').focus();
+        }
+
+        function updateTypingAvatar() {
+            const avatar = document.getElementById('typingAvatar');
+            avatar.innerText = userProfile.avatarChar;
+            avatar.style.background = 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)';
+            avatar.style.color = '#FFFFFF';
+        }
+
+        // Simulated Discord authorization popup controllers (Matches Discord in-app handshake!)
+        function openDiscordModal(mode) {
+            const titleEl = document.getElementById('discordModalTitle');
+            const subEl = document.getElementById('discordModalSub');
+            if (mode === 'signup') {
+                titleEl.innerHTML = "Sign Up with Discord";
+                subEl.innerHTML = "Create your aura account seamlessly using Discord OAuth2 handshake secure validation.";
+            } else {
+                titleEl.innerHTML = "Sign In with Discord";
+                subEl.innerHTML = "Log in back to aura by pairing Discord OAuth2 token records dynamically.";
+            }
+            document.getElementById('discordAuthOverlay').classList.add('show');
+        }
+
+        function closeDiscordModal(e) {
+            if (!e || e.target === document.getElementById('discordAuthOverlay') || e.target.classList.contains('da-header-close')) {
+                document.getElementById('discordAuthOverlay').classList.remove('show');
+            }
+        }
+
+        function completeDiscordAuth() {
+            const selector = document.getElementById('discordIdentitySelect');
+            const [email, name] = selector.value.split('|');
+            
+            userProfile.name = name;
+            userProfile.email = email;
+            userProfile.avatarChar = name.trim().charAt(0).toUpperCase();
+
+            // Update DOM profile contexts
+            updateTypingAvatar();
+            
+            // Close dialog
+            document.getElementById('discordAuthOverlay').classList.remove('show');
+            showToast(`Discord Authenticated: ${email} 🤝`);
+
+            // Append administrative systems response message
+            setTimeout(() => {
+                const autoReply = {
+                    name: "Aura Bouncer AI 🤖",
+                    badge: "অফিশিয়াল সার্ভিস",
+                    time: "মাত্র এখন (Just now)",
+                    text: `স্বাগতম @${name.replace(/\s+/g, '_')}! অরা নেটওয়ার্কে সফল হ্যান্ডশেক সম্পন্ন হয়েছে। আপনি এখন ভেরিফাইড ইউজার হিসেবে পোস্ট ইন্টারঅ্যাক্ট করতে পারবেন।`,
+                    likes: 1,
+                    likedByMe: false,
+                    avatarChar: "A"
+                };
+                commentsList.push(autoReply);
+                simulatedCommentsCount = commentsList.length;
+                updateStatsRow();
+                renderCommentsList();
+            }, 800);
+        }
+
+        // General dynamic Toast helper
+        function showToast(message) {
+            const banner = document.getElementById('toastBanner');
+            document.getElementById('toastMessage').innerText = message;
+            banner.classList.add('show');
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 2500);
+        }
+
+        // Web sharing click copier trigger
+        function triggerWebSharingFlow() {
+            const currentUrl = window.location.href;
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                showToast("শেয়ার লিংক ক্লিপবোর্ডে কপি করা হয়েছে! 🚀");
+                simulatedShareCount += 1;
+                updateStatsRow();
+            }).catch(() => {
+                showToast("লিংক পেস্ট করে শেয়ার করুন!");
+            });
+        }
+
+        // Helper utilities
+        function scrollToInstallSection() {
+            document.getElementById('installSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function switchGuide(lang) {
+            document.getElementById('tabBn').classList.remove('active');
+            document.getElementById('tabEn').classList.remove('active');
+            document.getElementById('guideBn').classList.remove('active');
+            document.getElementById('guideEn').classList.remove('active');
+
+            if (lang === 'bn') {
+                document.getElementById('tabBn').classList.add('active');
+                document.getElementById('guideBn').classList.add('active');
+            } else {
+                document.getElementById('tabEn').classList.add('active');
+                document.getElementById('guideEn').classList.add('active');
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>

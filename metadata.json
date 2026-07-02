@@ -1,0 +1,6 @@
+{
+  "name": "Aura",
+  "description": "Aura is a beautiful, 2026-designed social networking platform in Bold Lavender styling, featuring smooth transitions, user stories, posts feed, custom reactions, chat messaging, and full-featured local sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
